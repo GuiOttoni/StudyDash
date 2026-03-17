@@ -1,0 +1,55 @@
+# ── .NET ──────────────────────────────────────────────────────────────────────
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+**/*.suo
+**/launchSettings.json
+*.nupkg
+*.snupkg
+
+# ── Node / Next.js ────────────────────────────────────────────────────────────
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/build/
+**/.turbo/
+
+# Env files (nunca versionar secrets)
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.production
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Mantém Dockerfile e docker-compose, ignora volumes locais
+docker-volumes/
+
+# ── Editores e IDEs ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+desktop.ini
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.orig
+*.bak
+coverage/
+.nyc_output/
+# ── Claude Code ───
+.claude/

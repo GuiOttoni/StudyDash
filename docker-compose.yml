@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: studydash-backend
+    ports:
+      - "5055:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    networks:
+      - studydash-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:5055
+    container_name: studydash-frontend
+    ports:
+      - "3055:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5055
+    depends_on:
+      - backend
+    networks:
+      - studydash-net
+
+networks:
+  studydash-net:
+    driver: bridge

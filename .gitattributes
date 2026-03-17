@@ -1,0 +1,15 @@
+# Normaliza line endings para LF no repositório (checkout como CRLF no Windows)
+* text=auto eol=lf
+
+# Arquivos binários — sem conversão
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.lock binary
