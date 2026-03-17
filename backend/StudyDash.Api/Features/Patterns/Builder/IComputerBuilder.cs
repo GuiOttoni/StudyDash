@@ -1,4 +1,4 @@
-namespace StudyDash.Api.Patterns.Builder;
+namespace StudyDash.Api.Features.Patterns.Builder;
 
 public interface IComputerBuilder
 {

@@ -1,23 +1,28 @@
-using Microsoft.AspNetCore.Mvc;
+namespace StudyDash.Api.Features.Principles.Solid;
 
-namespace StudyDash.Api.Principles.SOLID;
-
-[ApiController]
-[Route("api/principles/solid")]
-public class SolidController : ControllerBase
+/// <summary>
+/// Vertical slice: SOLID Principles demo
+/// Route: GET /api/principles/solid/run
+/// </summary>
+public static class SolidFeature
 {
-    [HttpGet("run")]
-    public async Task Run(CancellationToken cancellationToken)
+    public static void MapSolidFeature(this IEndpointRouteBuilder app)
     {
-        Response.Headers.Append("Content-Type", "text/event-stream");
-        Response.Headers.Append("Cache-Control", "no-cache");
-        Response.Headers.Append("X-Accel-Buffering", "no");
-        Response.Headers.Append("Connection", "keep-alive");
+        app.MapGet("/api/principles/solid/run", RunAsync)
+           .WithTags("Principles");
+    }
+
+    private static async Task RunAsync(HttpContext http, CancellationToken cancellationToken)
+    {
+        http.Response.Headers.Append("Content-Type", "text/event-stream");
+        http.Response.Headers.Append("Cache-Control", "no-cache");
+        http.Response.Headers.Append("X-Accel-Buffering", "no");
+        http.Response.Headers.Append("Connection", "keep-alive");
 
         async Task Send(string message)
         {
-            await Response.WriteAsync($"data: {message}\n\n", cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await http.Response.WriteAsync($"data: {message}\n\n", cancellationToken);
+            await http.Response.Body.FlushAsync(cancellationToken);
         }
 
         async Task Section(string title)
@@ -32,100 +37,77 @@ public class SolidController : ControllerBase
             await Send("Executando demonstração dos 5 Princípios SOLID em C#");
             await Task.Delay(500, cancellationToken);
 
-            // ─────────────────────────────────────────────────────────
-            // S — Single Responsibility Principle
-            // ─────────────────────────────────────────────────────────
+            // S — Single Responsibility
             await Section("[S] Single Responsibility Principle");
             await Send("  Cada classe deve ter apenas UMA razão para mudar.");
             await Task.Delay(300, cancellationToken);
-
             await Send("");
             await Send("  ✗ Violação: InvoiceService faz tudo");
             await Task.Delay(200, cancellationToken);
             await Send("    → calcula total, salva no banco E envia por email");
             await Send("    → 3 motivos para mudar = 3 responsabilidades");
             await Task.Delay(400, cancellationToken);
-
             await Send("");
             await Send("  ✓ Solução: separar em classes especializadas");
             await Task.Delay(200, cancellationToken);
-
             var invoice = new Invoice(Items: 3, UnitPrice: 49.90m);
             await Send($"    Invoice.Calculate()         → total = R$ {invoice.Total:F2}");
             await Task.Delay(200, cancellationToken);
-
             var printer = new InvoicePrinter();
             await Send($"    InvoicePrinter.Print()      → {printer.Print(invoice)}");
             await Task.Delay(200, cancellationToken);
-
             var repo = new InvoiceRepository();
             await Send($"    InvoiceRepository.Save()    → {repo.Save(invoice)}");
             await Task.Delay(400, cancellationToken);
             await Send("  ✓ Cada classe tem 1 responsabilidade, 1 razão para mudar");
 
-            // ─────────────────────────────────────────────────────────
-            // O — Open/Closed Principle
-            // ─────────────────────────────────────────────────────────
+            // O — Open/Closed
             await Section("[O] Open/Closed Principle");
             await Send("  Classes abertas para extensão, fechadas para modificação.");
             await Task.Delay(300, cancellationToken);
-
             await Send("");
             await Send("  ✗ Violação: AreaCalculator com switch por tipo");
             await Send("    → adicionar Triangle exige modificar a classe existente");
             await Task.Delay(400, cancellationToken);
-
             await Send("");
             await Send("  ✓ Solução: IShape — novas formas sem tocar no Calculator");
             await Task.Delay(200, cancellationToken);
-
             IShape[] shapes = [new Circle(5), new Rectangle(4, 6), new Triangle(3, 8)];
             foreach (var shape in shapes)
                 await Send($"    {shape.GetType().Name,-12} → área = {shape.Area():F2}");
             await Task.Delay(200, cancellationToken);
-
             var calc = new AreaCalculator();
             await Send($"    AreaCalculator.Total()      → {calc.TotalArea(shapes):F2}");
             await Send("  ✓ Adicionou Triangle sem modificar AreaCalculator");
 
-            // ─────────────────────────────────────────────────────────
-            // L — Liskov Substitution Principle
-            // ─────────────────────────────────────────────────────────
+            // L — Liskov Substitution
             await Section("[L] Liskov Substitution Principle");
             await Send("  Subclasses devem poder substituir suas classes base.");
             await Task.Delay(300, cancellationToken);
-
             await Send("");
             await Send("  ✗ Violação: Penguin herda Bird.Fly() → lança exceção");
             await Send("    → substitui Bird, mas quebra o comportamento esperado");
             await Task.Delay(400, cancellationToken);
-
             await Send("");
             await Send("  ✓ Solução: Bird abstrata + interfaces IFlyable / ISwimmable");
             await Task.Delay(200, cancellationToken);
-
             Bird[] birds = [new Eagle(), new Penguin(), new Duck()];
             foreach (var bird in birds)
                 await Send($"    {bird.GetType().Name,-10} → {bird.Describe()}");
             await Task.Delay(200, cancellationToken);
             await Send("  ✓ Cada subtipo pode substituir Bird sem surpresas");
 
-            // ─────────────────────────────────────────────────────────
-            // I — Interface Segregation Principle
-            // ─────────────────────────────────────────────────────────
+            // I — Interface Segregation
             await Section("[I] Interface Segregation Principle");
             await Send("  Nenhum cliente deve depender de métodos que não usa.");
             await Task.Delay(300, cancellationToken);
-
             await Send("");
             await Send("  ✗ Violação: IWorker com Work() + Eat() + Sleep()");
             await Send("    → Robot implementa IWorker e é forçado a ter Eat() e Sleep()");
             await Task.Delay(400, cancellationToken);
-
             await Send("");
             await Send("  ✓ Solução: interfaces segregadas IWorkable, IFeedable, IRestable");
             await Task.Delay(200, cancellationToken);
-
             IWorkable[] workers = [new HumanWorker("Ana"), new RobotWorker("R2-D2")];
             foreach (var w in workers)
             {
@@ -136,22 +118,17 @@ public class SolidController : ControllerBase
             await Task.Delay(200, cancellationToken);
             await Send("  ✓ Robot não conhece Eat/Sleep, Human implementa os 3");
 
-            // ─────────────────────────────────────────────────────────
-            // D — Dependency Inversion Principle
-            // ─────────────────────────────────────────────────────────
+            // D — Dependency Inversion
             await Section("[D] Dependency Inversion Principle");
             await Send("  Dependa de abstrações, não de implementações concretas.");
             await Task.Delay(300, cancellationToken);
-
             await Send("");
             await Send("  ✗ Violação: OrderService instancia StripePayment diretamente");
             await Send("    → mudar para PayPal exige editar OrderService");
             await Task.Delay(400, cancellationToken);
-
             await Send("");
             await Send("  ✓ Solução: OrderService depende de IPaymentGateway");
             await Task.Delay(200, cancellationToken);
-
             IPaymentGateway[] gateways = [new StripeGateway(), new PayPalGateway()];
             foreach (var gw in gateways)
             {
@@ -162,7 +139,6 @@ public class SolidController : ControllerBase
             await Task.Delay(200, cancellationToken);
             await Send("  ✓ Troca de gateway sem alterar uma linha de OrderService");
 
-            // ── Resultado final
             await Send("");
             await Send("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
             await Send("✓ SOLID → código flexível, testável e manutenível");

@@ -1,4 +1,4 @@
-namespace StudyDash.Api.Patterns.Singleton;
+namespace StudyDash.Api.Features.Patterns.Singleton;
 
 public sealed class AppLogger
 {

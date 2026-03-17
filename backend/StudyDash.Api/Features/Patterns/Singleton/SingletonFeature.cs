@@ -1,23 +1,28 @@
-using Microsoft.AspNetCore.Mvc;
+namespace StudyDash.Api.Features.Patterns.Singleton;
 
-namespace StudyDash.Api.Patterns.Singleton;
-
-[ApiController]
-[Route("api/patterns/singleton")]
-public class SingletonController : ControllerBase
+/// <summary>
+/// Vertical slice: Singleton Pattern demo
+/// Route: GET /api/patterns/singleton/run
+/// </summary>
+public static class SingletonFeature
 {
-    [HttpGet("run")]
-    public async Task Run(CancellationToken cancellationToken)
+    public static void MapSingletonFeature(this IEndpointRouteBuilder app)
     {
-        Response.Headers.Append("Content-Type", "text/event-stream");
-        Response.Headers.Append("Cache-Control", "no-cache");
-        Response.Headers.Append("X-Accel-Buffering", "no");
-        Response.Headers.Append("Connection", "keep-alive");
+        app.MapGet("/api/patterns/singleton/run", RunAsync)
+           .WithTags("Patterns");
+    }
+
+    private static async Task RunAsync(HttpContext http, CancellationToken cancellationToken)
+    {
+        http.Response.Headers.Append("Content-Type", "text/event-stream");
+        http.Response.Headers.Append("Cache-Control", "no-cache");
+        http.Response.Headers.Append("X-Accel-Buffering", "no");
+        http.Response.Headers.Append("Connection", "keep-alive");
 
         async Task Send(string message)
         {
-            await Response.WriteAsync($"data: {message}\n\n", cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await http.Response.WriteAsync($"data: {message}\n\n", cancellationToken);
+            await http.Response.Body.FlushAsync(cancellationToken);
         }
 
         try
@@ -25,7 +30,6 @@ public class SingletonController : ControllerBase
             await Send("── Demonstração do Padrão Singleton ──");
             await Task.Delay(400, cancellationToken);
 
-            // ── Primeira chamada
             await Send("");
             await Send("» Chamada 1: AppLogger.GetInstance() — primeira vez");
             await Task.Delay(300, cancellationToken);
@@ -33,7 +37,6 @@ public class SingletonController : ControllerBase
             await Send($"  ✓ Instância criada  →  id={logger1.InstanceId}");
             await Task.Delay(300, cancellationToken);
 
-            // ── Segunda chamada (simula outro serviço)
             await Send("");
             await Send("» Chamada 2: AppLogger.GetInstance() — outro serviço");
             await Task.Delay(300, cancellationToken);
@@ -45,7 +48,6 @@ public class SingletonController : ControllerBase
                 : "  ✗ Instâncias diferentes (bug!)");
             await Task.Delay(400, cancellationToken);
 
-            // ── Terceira chamada (simula mais um serviço)
             await Send("");
             await Send("» Chamada 3: AppLogger.GetInstance() — mais um serviço");
             await Task.Delay(300, cancellationToken);
@@ -56,7 +58,6 @@ public class SingletonController : ControllerBase
                 : "  ✗ Instâncias diferentes (bug!)");
             await Task.Delay(400, cancellationToken);
 
-            // ── Demonstração de estado compartilhado
             await Send("");
             await Send("── Estado compartilhado (todas usam o mesmo contador) ──");
             await Task.Delay(300, cancellationToken);

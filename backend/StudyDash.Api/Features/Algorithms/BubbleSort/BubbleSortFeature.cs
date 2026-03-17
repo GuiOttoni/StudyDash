@@ -1,27 +1,33 @@
-using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
-namespace StudyDash.Api.Algorithms.BubbleSort;
+namespace StudyDash.Api.Features.Algorithms.BubbleSort;
 
-[ApiController]
-[Route("api/algorithms/bubblesort")]
-public class BubbleSortController : ControllerBase
+/// <summary>
+/// Vertical slice: Bubble Sort algorithm demo with real-time visualization
+/// Route: GET /api/algorithms/bubblesort/run?size=N  (N: 5–10)
+/// </summary>
+public static class BubbleSortFeature
 {
-    [HttpGet("run")]
-    public async Task Run([FromQuery] int size = 7, CancellationToken cancellationToken = default)
+    public static void MapBubbleSortFeature(this IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/algorithms/bubblesort/run", RunAsync)
+           .WithTags("Algorithms");
+    }
+
+    private static async Task RunAsync(HttpContext http, int size = 7, CancellationToken cancellationToken = default)
     {
         size = Math.Clamp(size, 5, 10);
 
-        Response.Headers.Append("Content-Type", "text/event-stream");
-        Response.Headers.Append("Cache-Control", "no-cache");
-        Response.Headers.Append("X-Accel-Buffering", "no");
-        Response.Headers.Append("Connection", "keep-alive");
+        http.Response.Headers.Append("Content-Type", "text/event-stream");
+        http.Response.Headers.Append("Cache-Control", "no-cache");
+        http.Response.Headers.Append("X-Accel-Buffering", "no");
+        http.Response.Headers.Append("Connection", "keep-alive");
 
         async Task Send(object payload)
         {
             var json = JsonSerializer.Serialize(payload);
-            await Response.WriteAsync($"data: {json}\n\n", cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+            await http.Response.WriteAsync($"data: {json}\n\n", cancellationToken);
+            await http.Response.Body.FlushAsync(cancellationToken);
         }
 
         try
@@ -47,7 +53,6 @@ public class BubbleSortController : ControllerBase
                 {
                     totalComparisons++;
 
-                    // Show comparison
                     await Send(new { type = "state", array = (int[])array.Clone(), comparing = new[] { i, i + 1 }, sorted = sortedIndices.ToArray() });
                     await Task.Delay(220, cancellationToken);
 
@@ -74,7 +79,7 @@ public class BubbleSortController : ControllerBase
                 if (!swappedInPass)
                 {
                     for (int k = 0; k <= n - 1 - pass; k++) sortedIndices.Add(k);
-                    await Send(new { type = "log", msg = $"  Nenhuma troca neste pass → early exit!" });
+                    await Send(new { type = "log", msg = "  Nenhuma troca neste pass → early exit!" });
                     break;
                 }
             }
@@ -86,9 +91,6 @@ public class BubbleSortController : ControllerBase
             await Send(new { type = "log", msg = $"  Comparações: {totalComparisons}  |  Trocas: {totalSwaps}  |  Complexidade: O(n²)" });
             await Send(new { type = "done" });
         }
-        catch (OperationCanceledException)
-        {
-            // Client disconnected
-        }
+        catch (OperationCanceledException) { }
     }
 }

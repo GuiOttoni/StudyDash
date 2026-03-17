@@ -36,82 +36,161 @@ docker compose up --build
 
 ### Design Patterns
 
-| Pattern | Categoria | Descrição |
+| Pattern | Categoria | Rota |
 |---|---|---|
-| [Builder](http://localhost:3055/patterns/builder) | Criacional | Constrói um objeto complexo passo a passo com Director + ConcreteBuilder |
-| [Singleton](http://localhost:3055/patterns/singleton) | Criacional | Garante uma única instância com thread-safety (double-check locking) |
+| Builder | Criacional | `/patterns/builder` |
+| Singleton | Criacional | `/patterns/singleton` |
 
 ### Algoritmos
 
-| Algoritmo | Descrição |
+| Algoritmo | Rota |
 |---|---|
-| [Bubble Sort](http://localhost:3055/patterns/bubble-sort) | Ordenação com visualização em gráfico de barras em tempo real, array randômico, early exit |
+| Bubble Sort (com gráfico) | `/patterns/bubble-sort` |
 
 ### Clean Code
 
-| Tópico | Descrição |
+| Tópico | Rota |
 |---|---|
-| [Princípios SOLID](http://localhost:3055/patterns/solid) | Os 5 princípios com exemplos de violação e solução em C# |
+| Princípios SOLID | `/patterns/solid` |
 
-## Estrutura do projeto
+> Veja [TODO.md](TODO.md) para o roadmap completo de implementações.
+
+---
+
+## Arquitetura do Backend — Vertical Slices
+
+O backend adota a arquitetura de **Vertical Slices**: cada exemplo é uma fatia independente que contém tudo que precisa — o endpoint HTTP, a lógica de domínio e os modelos — dentro de sua própria pasta em `Features/`.
+
+```
+backend/StudyDash.Api/
+├── Features/
+│   ├── Patterns/
+│   │   ├── Builder/
+│   │   │   ├── BuilderFeature.cs       ← endpoint + registro de rota
+│   │   │   ├── Computer.cs             ← domain: produto
+│   │   │   ├── IComputerBuilder.cs     ← domain: interface do builder
+│   │   │   ├── GamingComputerBuilder.cs ← domain: builder concreto
+│   │   │   └── ComputerDirector.cs     ← domain: director
+│   │   └── Singleton/
+│   │       ├── SingletonFeature.cs
+│   │       └── AppLogger.cs
+│   ├── Algorithms/
+│   │   └── BubbleSort/
+│   │       └── BubbleSortFeature.cs    ← endpoint + algoritmo inline
+│   └── Principles/
+│       └── Solid/
+│           └── SolidFeature.cs         ← endpoint + todas as classes demo
+└── Program.cs                          ← registra todos os slices
+```
+
+### Por que Vertical Slices?
+
+| Organização por camada (tradicional) | Organização por feature (vertical slice) |
+|---|---|
+| `Controllers/`, `Services/`, `Models/` separados | Tudo de uma feature em uma pasta |
+| Adicionar feature = mexer em 3+ pastas | Adicionar feature = criar 1 pasta |
+| Alto acoplamento horizontal | Alta coesão, baixo acoplamento |
+| Difícil entender o que uma feature faz | Fácil: abrir a pasta e ver tudo |
+
+### Como funciona o registro de rotas
+
+Cada slice expõe um método de extensão sobre `IEndpointRouteBuilder`. O `Program.cs` apenas chama cada um:
+
+```csharp
+// Program.cs
+app.MapBuilderFeature();
+app.MapSingletonFeature();
+app.MapBubbleSortFeature();
+app.MapSolidFeature();
+```
+
+```csharp
+// Features/Patterns/Builder/BuilderFeature.cs
+public static class BuilderFeature
+{
+    public static void MapBuilderFeature(this IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/patterns/builder/run", RunAsync)
+           .WithTags("Patterns");
+    }
+
+    private static async Task RunAsync(HttpContext http, CancellationToken ct) { ... }
+}
+```
+
+---
+
+## Arquitetura do Frontend — RSC + Client Islands
+
+O frontend segue o padrão de **React Server Components com ilhas de interatividade**:
+
+```
+page.tsx (RSC)
+├── PatternLayout       ← RSC: título, badge, explicação
+├── CodeSnippet         ← RSC: highlight via Shiki (zero JS no cliente)
+├── SourceLinks         ← RSC: links externos
+└── LogRunSection       ← Client: SSE, estado, EventSource
+```
+
+- **RSC** renderiza conteúdo estático no servidor — zero JS enviado ao browser
+- **Client Components** são limitados às folhas interativas (botão de run, logs, gráfico)
+- `NEXT_PUBLIC_API_URL` é embutido no bundle em tempo de build
+
+---
+
+## Arquitetura de Streaming (SSE)
+
+```
+Browser                    Next.js :3055             .NET API :5055
+   │                            │                         │
+   │─── GET /patterns/builder ──▶│                         │
+   │◀── HTML estático (SSG) ─────│                         │
+   │                            │                         │
+   │─── new EventSource() ────────────────────────────────▶│
+   │◀──────────────── data: log 1 \n\n ───────────────────│
+   │◀──────────────── data: log 2 \n\n ───────────────────│
+   │◀──────────────── data: [DONE] \n\n ──────────────────│
+   │─── es.close() ─────────────│                         │
+```
+
+---
+
+## Estrutura completa do projeto
 
 ```
 StudyDash/
 ├── docker-compose.yml
+├── .gitignore
+├── .gitattributes
+├── CONTRIBUTING.md             ← guia para contribuir
+├── TODO.md                     ← checklist de próximas implementações
 │
-├── backend/                          # .NET 10 Web API
+├── backend/
 │   ├── Dockerfile
+│   ├── StudyDash.Api.slnx
 │   └── StudyDash.Api/
-│       ├── Patterns/
-│       │   ├── Builder/              # GET /api/patterns/builder/run
-│       │   └── Singleton/            # GET /api/patterns/singleton/run
-│       ├── Algorithms/
-│       │   └── BubbleSort/           # GET /api/algorithms/bubblesort/run?size=N
-│       ├── Principles/
-│       │   └── SOLID/                # GET /api/principles/solid/run
+│       ├── Features/           ← Vertical Slices
+│       │   ├── Patterns/
+│       │   │   ├── Builder/
+│       │   │   └── Singleton/
+│       │   ├── Algorithms/
+│       │   │   └── BubbleSort/
+│       │   └── Principles/
+│       │       └── Solid/
 │       └── Program.cs
 │
-└── frontend/                         # Next.js 16
+└── frontend/
     ├── Dockerfile
-    └── src/
-        ├── app/
-        │   ├── page.tsx              # Dashboard (grid de padrões)
-        │   └── patterns/
-        │       ├── builder/
-        │       ├── singleton/
-        │       ├── bubble-sort/
-        │       └── solid/
-        ├── components/
-        │   ├── layout/
-        │   ├── dashboard/
-        │   ├── patterns/             # CodeSnippet (RSC), LogRunSection (client)
-        │   └── algorithms/           # ArrayChart, BubbleSortRunSection
-        └── lib/
-            └── patterns-data.ts      # Metadados de todos os exemplos
+    └── app/
+        ├── page.tsx            ← Dashboard
+        └── patterns/
+            ├── builder/
+            ├── singleton/
+            ├── bubble-sort/
+            └── solid/
 ```
 
-## Arquitetura de streaming
-
-Cada exemplo executa código real no backend .NET e transmite logs em tempo real para o browser via **Server-Sent Events (SSE)**:
-
-```
-Browser                      Next.js (3055)          .NET API (5055)
-   │                               │                        │
-   │── GET /patterns/builder ──────▶│                        │
-   │◀─── HTML (SSG) ───────────────│                        │
-   │                               │                        │
-   │── EventSource ────────────────────────────────────────▶│
-   │◀─────────────── data: log 1 \n\n ─────────────────────│
-   │◀─────────────── data: log 2 \n\n ─────────────────────│
-   │◀─────────────── data: [DONE] \n\n ────────────────────│
-```
-
-## Como adicionar um novo exemplo
-
-1. **Backend:** crie um controller em `Patterns/` ou `Algorithms/` com endpoint `GET .../run` retornando `text/event-stream`
-2. **Frontend:** adicione a entrada em `lib/patterns-data.ts` com `available: true`
-3. **Página:** crie `app/patterns/<slug>/page.tsx` com `<LogRunSection>` ou `<BubbleSortRunSection>`
-4. Rebuild: `docker compose up --build`
+---
 
 ## Variáveis de ambiente
 
