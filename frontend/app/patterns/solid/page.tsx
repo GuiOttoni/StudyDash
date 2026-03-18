@@ -199,6 +199,7 @@ export default async function SolidPage() {
 
   return (
     <div className="flex flex-col gap-10 max-w-4xl">
+      {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-zinc-500">
         <Link href="/" className="hover:text-zinc-300 transition-colors">Padrões</Link>
         <span>/</span>
@@ -218,12 +219,13 @@ export default async function SolidPage() {
         </div>
 
         <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6">
-          <p className="text-zinc-400 leading-relaxed">
+          <h2 className="font-semibold text-white text-lg">O que é?</h2>
+          <p className="text-zinc-400 leading-relaxed mt-2">
             SOLID é um acrônimo para cinco princípios de design orientado a objetos introduzidos por{" "}
             <strong className="text-zinc-200">Robert C. Martin (Uncle Bob)</strong>. Seguir esses princípios
             resulta em código mais <strong className="text-zinc-200">flexível, testável e manutenível</strong>.
           </p>
-          <div className="flex flex-wrap gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-6">
             {principles.map((p) => (
               <span key={p.letter} className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm ${p.color}`}>
                 <span className={`w-5 h-5 rounded text-white text-xs font-bold flex items-center justify-center ${p.letterBg}`}>

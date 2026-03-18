@@ -16,7 +16,7 @@ interface Props {
   apiUrl: string;
 }
 
-export function BubbleSortRunSection({ apiUrl }: Props) {
+export function MergeSortRunSection({ apiUrl }: Props) {
   const [size, setSize] = useState(7);
   const [logs, setLogs] = useState<string[]>([]);
   const [chartState, setChartState] = useState<{
@@ -75,17 +75,16 @@ export function BubbleSortRunSection({ apiUrl }: Props) {
   };
 
   const renderLogLine = (line: string, i: number) => {
-    const isPass = line.startsWith("──");
-    const isSwap = line.includes("→ troca!");
+    const isDividing = line.startsWith("Dividindo:");
+    const isMerging = line.startsWith("Mesclando metades:");
     const isDone = line.startsWith("✓");
-    const isStats = line.startsWith("  Comparações:");
 
-    const color = isDone || isStats
+    const color = isDone
       ? "text-emerald-400"
-      : isSwap
-      ? "text-orange-300"
-      : isPass
+      : isMerging
       ? "text-blue-400 font-semibold"
+      : isDividing
+      ? "text-orange-300"
       : "text-zinc-400";
 
     return (
