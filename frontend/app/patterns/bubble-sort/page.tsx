@@ -63,7 +63,7 @@ export default function BubbleSortPage() {
   return (
     <AlgorithmLayout
       title="Bubble Sort"
-      icon="🫧"
+      icon="ArrowUpDown"
       category="Algoritmo"
       description="O Bubble Sort é um algoritmo de ordenação por comparação que percorre repetidamente a lista, compara elementos adjacentes e os troca se estiverem na ordem errada. O maior elemento 'borbulha' para o final a cada passagem."
       complexities={complexities}

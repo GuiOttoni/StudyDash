@@ -9,7 +9,10 @@ public static class SolidFeature
     public static void MapSolidFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/principles/solid/run", RunAsync)
-           .WithTags("Principles");
+           .WithTags("Principles")
+           .WithSummary("Demo Princípios SOLID")
+           .WithDescription("Executa os 5 princípios SOLID via SSE: SRP, OCP, LSP, ISP e DIP — instancia as classes de exemplo do dashboard e demonstra o comportamento correto de cada princípio.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private static async Task RunAsync(HttpContext http, CancellationToken cancellationToken)

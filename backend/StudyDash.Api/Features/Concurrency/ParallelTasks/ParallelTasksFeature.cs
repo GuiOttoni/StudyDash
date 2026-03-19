@@ -12,7 +12,10 @@ public static class ParallelTasksFeature
     public static void MapParallelTasksFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/concurrency/parallel-tasks/run", RunAsync)
-           .WithTags("Concurrency");
+           .WithTags("Concurrency")
+           .WithSummary("Demo Parallel Tasks")
+           .WithDescription("Demonstra `Parallel.For`, `Parallel.ForEach` e `Task.WhenAll` via SSE: executa tarefas em paralelo com baseline sequencial, calcula speedup real e exibe os IDs de thread do ThreadPool.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private static async Task RunAsync(HttpContext http, CancellationToken cancellationToken)

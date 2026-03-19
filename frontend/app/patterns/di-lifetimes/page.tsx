@@ -34,7 +34,7 @@ export default function DiLifetimesPage() {
   return (
     <AlgorithmLayout
       title="Lifetimes de Injeção de Dependência"
-      icon="💉"
+      icon="FlaskConical"
       category="Clean Code"
       description="Gerenciar o ciclo de vida dos serviços é fundamental para a performance, consistência de dados e prevenção de memory leaks em aplicações .NET."
       sources={sources}

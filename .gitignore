@@ -25,6 +25,7 @@
 # ── Docker ────────────────────────────────────────────────────────────────────
 # Mantém Dockerfile e docker-compose, ignora volumes locais
 docker-volumes/
+.pgdata/
 
 # ── Editores e IDEs ───────────────────────────────────────────────────────────
 .vscode/

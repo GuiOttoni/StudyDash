@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { getSections } from "@/lib/api";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,16 +20,18 @@ export const metadata: Metadata = {
   description: "Dashboard interativo para aprender Design Patterns, Algoritmos, Clean Code e muito mais.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const sections = await getSections();
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-zinc-950 text-zinc-100`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <SiteHeader />
+          <SiteHeader sections={sections} />
           <main className="max-w-7xl mx-auto px-4 py-10">
             {children}
           </main>

@@ -11,7 +11,10 @@ public static class HeapStackFeature
     public static void MapHeapStackFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/memory/heap-stack/run", RunAsync)
-           .WithTags("Memory");
+           .WithTags("Memory")
+           .WithSummary("Demo Heap vs Stack")
+           .WithDescription("Demonstra alocação em heap (tipos de referência) e stack (tipos de valor) via SSE: mede tamanhos com `Unsafe.SizeOf`, exibe boxing/unboxing, GC pressure e comportamento de cópia de structs vs classes.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private struct PointStruct { public int X; public int Y; }

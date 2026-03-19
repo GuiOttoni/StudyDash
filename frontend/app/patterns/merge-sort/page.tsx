@@ -82,7 +82,7 @@ export default function MergeSortPage() {
   return (
     <AlgorithmLayout
       title="Merge Sort"
-      icon="🧩"
+      icon="GitMerge"
       category="Algoritmo"
       description="O Merge Sort é um algoritmo de ordenação eficiente, baseado no princípio de 'Dividir e Conquistar'. Ele quebra o problema em subproblemas menores, resolve cada um e depois combina os resultados."
       complexities={complexities}

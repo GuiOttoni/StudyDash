@@ -40,7 +40,7 @@ export default function RecordClassStructPage() {
   return (
     <AlgorithmLayout
       title="Record vs Class vs Struct"
-      icon="📦"
+      icon="Boxes"
       category="Memória"
       description="Record, Class e Struct diferem em onde vivem na memória, semântica de igualdade e comportamento de cópia. Escolher o tipo certo impacta diretamente em alocações, pressão no GC e correção do código."
       sources={sources}

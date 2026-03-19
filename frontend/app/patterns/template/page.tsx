@@ -69,7 +69,7 @@ export default function NewPatternPage() {
   return (
     <AlgorithmLayout
       title="Nome do Padrão"
-      icon="✨"
+      icon="Star"
       category="Algoritmo" // Verifique PatternCategory em lib/patterns-data.ts
       description="Descrição clara e concisa do que é este padrão ou algoritmo."
       complexities={complexities}

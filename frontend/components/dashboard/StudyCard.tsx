@@ -1,27 +1,29 @@
 import Link from "next/link";
-import { type PatternMeta, categoryColors } from "@/lib/patterns-data";
+import type { StudyDto } from "@/lib/types";
+import { getCategoryColor } from "@/lib/category-colors";
+import { Icon } from "@/components/ui/Icon";
 
 interface Props {
-  pattern: PatternMeta;
+  study: StudyDto;
 }
 
-export function PatternCard({ pattern }: Props) {
-  const badgeClass = categoryColors[pattern.category];
+export function StudyCard({ study }: Props) {
+  const badgeClass = getCategoryColor(study.category);
 
   const card = (
     <div
       className={`
         group relative rounded-xl border p-6 flex flex-col gap-4 transition-all duration-200
         ${
-          pattern.available
+          study.available
             ? "border-zinc-700 bg-zinc-900 hover:border-zinc-500 hover:bg-zinc-800 cursor-pointer"
             : "border-zinc-800 bg-zinc-900/50 opacity-60 cursor-not-allowed"
         }
       `}
     >
       <div className="flex items-start justify-between">
-        <span className="text-3xl">{pattern.icon}</span>
-        {!pattern.available && (
+        <Icon name={study.icon} size={32} strokeWidth={1.5} className="text-zinc-300" />
+        {!study.available && (
           <span className="text-xs px-2 py-1 rounded-full bg-zinc-800 text-zinc-500 border border-zinc-700">
             Em breve
           </span>
@@ -30,17 +32,17 @@ export function PatternCard({ pattern }: Props) {
 
       <div className="flex flex-col gap-2">
         <h3 className="font-semibold text-lg text-white group-hover:text-zinc-100">
-          {pattern.title}
+          {study.title}
         </h3>
         <span className={`self-start text-xs px-2 py-0.5 rounded-full border font-medium ${badgeClass}`}>
-          {pattern.category}
+          {study.category}
         </span>
         <p className="text-sm text-zinc-400 leading-relaxed">
-          {pattern.description}
+          {study.description}
         </p>
       </div>
 
-      {pattern.available && (
+      {study.available && (
         <div className="mt-auto pt-2">
           <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
             Ver exemplo →
@@ -50,10 +52,10 @@ export function PatternCard({ pattern }: Props) {
     </div>
   );
 
-  if (!pattern.available) return card;
+  if (!study.available) return card;
 
   return (
-    <Link href={`/patterns/${pattern.slug}`} className="block">
+    <Link href={`/patterns/${study.slug}`} className="block">
       {card}
     </Link>
   );

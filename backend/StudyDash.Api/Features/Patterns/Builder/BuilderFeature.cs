@@ -9,7 +9,10 @@ public static class BuilderFeature
     public static void MapBuilderFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/patterns/builder/run", RunAsync)
-           .WithTags("Patterns");
+           .WithTags("Patterns")
+           .WithSummary("Demo Builder Pattern")
+           .WithDescription("Executa o Builder Pattern via SSE: constrói um computador gamer passo a passo usando Director + ConcreteBuilder, demonstrando separação entre construção e representação. Stream encerra com `data: [DONE]`.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private static async Task RunAsync(HttpContext http, CancellationToken cancellationToken)

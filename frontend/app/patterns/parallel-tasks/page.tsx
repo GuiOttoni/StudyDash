@@ -47,7 +47,7 @@ export default function ParallelTasksPage() {
   return (
     <AlgorithmLayout
       title="Parallel Tasks"
-      icon="⚡"
+      icon="Zap"
       category="Concorrência"
       description="O .NET oferece três formas principais de paralelismo: Parallel.For e Parallel.ForEach para trabalho CPU-bound, e Task.WhenAll para I/O-bound assíncrono. Todas distribuem trabalho entre núcleos automaticamente, com speedup proporcional ao número de cores."
       sources={sources}

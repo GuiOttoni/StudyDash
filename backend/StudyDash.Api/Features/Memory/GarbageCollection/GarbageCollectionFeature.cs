@@ -9,7 +9,10 @@ public static class GarbageCollectionFeature
     public static void MapGarbageCollectionFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/memory/garbage-collection/run", RunAsync)
-           .WithTags("Memory");
+           .WithTags("Memory")
+           .WithSummary("Demo Garbage Collection")
+           .WithDescription("Observa o GC em ação via SSE: aloca objetos de curta duração (Gen0), longa duração (Gen1/Gen2), força `GC.Collect()` e exibe contadores de coleta por geração. Demonstra também `WeakReference` e finalização.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private class ShortLived { public int Value; }

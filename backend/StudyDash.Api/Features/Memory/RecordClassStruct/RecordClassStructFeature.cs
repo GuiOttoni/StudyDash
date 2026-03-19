@@ -11,7 +11,10 @@ public static class RecordClassStructFeature
     public static void MapRecordClassStructFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/memory/record-class-struct/run", RunAsync)
-           .WithTags("Memory");
+           .WithTags("Memory")
+           .WithSummary("Demo Record vs Class vs Struct")
+           .WithDescription("Compara semântica de igualdade, cópia e alocação de memória entre `record`, `class` e `struct` via SSE. Mede alocações reais com `GC.GetTotalMemory()` e demonstra as diferenças comportamentais de cada tipo.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private record  PointRecord(int X, int Y);

@@ -39,7 +39,7 @@ export default function GarbageCollectionPage() {
   return (
     <AlgorithmLayout
       title="Garbage Collection"
-      icon="♻️"
+      icon="RefreshCw"
       category="Memória"
       description="O Garbage Collector do .NET libera automaticamente memória de objetos não referenciados usando um sistema de gerações (Gen0, Gen1, Gen2). Gen0 coleta objetos curta duração frequentemente; Gen2 raramente coleta objetos de longa duração."
       sources={sources}

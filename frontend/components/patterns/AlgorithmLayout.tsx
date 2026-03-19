@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { categoryColors, PatternCategory, sections } from "@/lib/patterns-data";
+import { getSections } from "@/lib/api";
+import { getCategoryColor } from "@/lib/category-colors";
 import { SourceLinks } from "./SourceLinks";
 import { CodeSnippet } from "./CodeSnippet";
+import { Icon } from "@/components/ui/Icon";
 
 interface Complexity {
   label: string;
@@ -19,7 +21,7 @@ interface Source {
 interface Props {
   title: string;
   icon: string;
-  category: PatternCategory;
+  category: string;
   description: string;
   complexities?: Complexity[];
   steps?: string[];
@@ -31,7 +33,7 @@ interface Props {
   children: React.ReactNode;
 }
 
-export function AlgorithmLayout({
+export async function AlgorithmLayout({
   title,
   icon,
   category,
@@ -43,22 +45,23 @@ export function AlgorithmLayout({
   codeLang = "csharp",
   codeTitle = "Código de Exemplo",
   codeDescription,
-  children
+  children,
 }: Props) {
+  const sections = await getSections();
+  const parentSection = sections.find((s) => s.categories.includes(category));
+  const badgeClass = getCategoryColor(category);
+
   return (
     <div className="flex flex-col gap-10 max-w-4xl">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-zinc-500">
-        {(() => {
-          const section = sections.find((s) => s.categories.includes(category));
-          return section ? (
-            <Link href={`/${section.slug}`} className="hover:text-zinc-300 transition-colors">
-              {section.title}
-            </Link>
-          ) : (
-            <Link href="/" className="hover:text-zinc-300 transition-colors">Início</Link>
-          );
-        })()}
+        {parentSection ? (
+          <Link href={`/${parentSection.slug}`} className="hover:text-zinc-300 transition-colors">
+            {parentSection.title}
+          </Link>
+        ) : (
+          <Link href="/" className="hover:text-zinc-300 transition-colors">Início</Link>
+        )}
         <span>/</span>
         <span className="text-zinc-300">{title}</span>
       </nav>
@@ -66,10 +69,10 @@ export function AlgorithmLayout({
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-4xl">{icon}</span>
+          <Icon name={icon} size={40} strokeWidth={1.5} className="text-zinc-300 shrink-0" />
           <div>
             <h1 className="text-3xl font-bold text-white">{title}</h1>
-            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${categoryColors[category]}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${badgeClass}`}>
               {category}
             </span>
           </div>
@@ -78,9 +81,7 @@ export function AlgorithmLayout({
         {/* Explanation */}
         <div className="flex flex-col gap-4 bg-zinc-900 rounded-xl border border-zinc-800 p-6">
           <h2 className="font-semibold text-white text-lg">O que é?</h2>
-          <p className="text-zinc-400 leading-relaxed">
-            {description}
-          </p>
+          <p className="text-zinc-400 leading-relaxed">{description}</p>
 
           {complexities && complexities.length > 0 && (
             <>

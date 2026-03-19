@@ -81,7 +81,7 @@ export default function BuilderPage() {
   return (
     <AlgorithmLayout
       title="Builder"
-      icon="🏗️"
+      icon="Hammer"
       category="Criacional"
       description="O Builder é um padrão de design criacional que separa a construção de um objeto complexo de sua representação final. Isso permite que o mesmo processo de construção possa criar diferentes representações."
       sources={sources}

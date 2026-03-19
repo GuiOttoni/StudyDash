@@ -1,8 +1,11 @@
 import Link from "next/link";
-import { sections, patterns } from "@/lib/patterns-data";
-import { PatternGrid } from "@/components/dashboard/PatternGrid";
+import { getSections, getStudies } from "@/lib/api";
+import { StudyGrid } from "@/components/dashboard/StudyGrid";
+import { Icon } from "@/components/ui/Icon";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [sections, allStudies] = await Promise.all([getSections(), getStudies()]);
+
   return (
     <div className="flex flex-col gap-14">
       <div className="flex flex-col gap-3">
@@ -16,20 +19,20 @@ export default function HomePage() {
       </div>
 
       {sections.map((section) => {
-        const count = patterns.filter((p) => section.categories.includes(p.category)).length;
-        const availableCount = patterns.filter(
-          (p) => section.categories.includes(p.category) && p.available
-        ).length;
+        const sectionStudies = allStudies.filter((s) =>
+          section.categories.includes(s.category)
+        );
+        const availableCount = sectionStudies.filter((s) => s.available).length;
 
         return (
           <section key={section.slug} className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{section.icon}</span>
+                <Icon name={section.icon} size={24} strokeWidth={1.5} className="text-zinc-300 shrink-0" />
                 <div>
                   <h2 className="text-xl font-semibold text-white">{section.title}</h2>
                   <p className="text-sm text-zinc-500">
-                    {availableCount} de {count} disponíveis
+                    {availableCount} de {sectionStudies.length} disponíveis
                   </p>
                 </div>
               </div>
@@ -40,7 +43,7 @@ export default function HomePage() {
                 Ver seção →
               </Link>
             </div>
-            <PatternGrid categories={section.categories} />
+            <StudyGrid studies={sectionStudies} />
           </section>
         );
       })}

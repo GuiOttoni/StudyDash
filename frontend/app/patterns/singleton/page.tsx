@@ -58,7 +58,7 @@ export default function SingletonPage() {
   return (
     <AlgorithmLayout
       title="Singleton"
-      icon="🔒"
+      icon="Lock"
       category="Criacional"
       description="O Singleton garante que uma classe tenha apenas uma única instância em toda a aplicação, fornecendo um ponto de acesso global a ela. Toda chamada a GetInstance() retorna exatamente o mesmo objeto na memória."
       sources={sources}

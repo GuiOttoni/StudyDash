@@ -25,7 +25,10 @@ public static class DiLifetimesFeature
     public static void MapDiLifetimesFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/algorithms/dilifetimes/run", RunAsync)
-           .WithTags("CleanCode");
+           .WithTags("CleanCode")
+           .WithSummary("Demo DI Lifetimes")
+           .WithDescription("Demonstra as diferenças entre Transient, Scoped e Singleton no .NET DI via SSE: resolve cada serviço múltiplas vezes e compara os GUIDs para provar quando uma nova instância é criada ou reutilizada.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private static async Task RunAsync(

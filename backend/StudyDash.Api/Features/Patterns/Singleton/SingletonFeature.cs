@@ -9,7 +9,10 @@ public static class SingletonFeature
     public static void MapSingletonFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/patterns/singleton/run", RunAsync)
-           .WithTags("Patterns");
+           .WithTags("Patterns")
+           .WithSummary("Demo Singleton Pattern")
+           .WithDescription("Executa o Singleton Pattern via SSE: instancia AppLogger múltiplas vezes e confirma que todas as referências apontam para o mesmo objeto (mesmo HashCode). Demonstra thread-safety com `lock`.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private static async Task RunAsync(HttpContext http, CancellationToken cancellationToken)

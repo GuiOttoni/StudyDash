@@ -11,7 +11,10 @@ public static class BubbleSortFeature
     public static void MapBubbleSortFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/algorithms/bubblesort/run", RunAsync)
-           .WithTags("Algorithms");
+           .WithTags("Algorithms")
+           .WithSummary("Demo Bubble Sort")
+           .WithDescription("Ordena um array aleatório via Bubble Sort com visualização passo a passo via SSE. Cada evento carrega o estado atual do array em JSON. O parâmetro `size` define o tamanho (5–10, padrão 7).")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private static async Task RunAsync(HttpContext http, int size = 7, CancellationToken cancellationToken = default)

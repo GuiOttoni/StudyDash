@@ -1,4 +1,23 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: studydash-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: studydash
+      POSTGRES_USER: studydash
+      POSTGRES_PASSWORD: studydash
+    volumes:
+      - ./.pgdata:/var/lib/postgresql/data
+    networks:
+      - studydash-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studydash -d studydash"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./backend
@@ -9,6 +28,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=studydash;Username=studydash;Password=studydash
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - studydash-net
 
@@ -23,6 +46,7 @@ services:
       - "3055:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:5055
+      - INTERNAL_API_URL=http://studydash-backend:8080
     depends_on:
       - backend
     networks:
@@ -31,3 +55,4 @@ services:
 networks:
   studydash-net:
     driver: bridge
+

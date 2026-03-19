@@ -42,7 +42,7 @@ export default function HeapStackPage() {
   return (
     <AlgorithmLayout
       title="Heap vs Stack"
-      icon="🧠"
+      icon="Server"
       category="Memória"
       description="No .NET, tipos de valor (int, struct) vivem na stack — rápidos e automáticos. Tipos de referência (class, record) vivem no heap — gerenciados pelo GC. Entender essa diferença é fundamental para escrever código eficiente."
       sources={sources}

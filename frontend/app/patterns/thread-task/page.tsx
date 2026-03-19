@@ -43,7 +43,7 @@ export default function ThreadTaskPage() {
   return (
     <AlgorithmLayout
       title="Thread vs Task"
-      icon="⚙️"
+      icon="Terminal"
       category="Concorrência"
       description="Thread é uma kernel thread dedicada — leve no código, mas pesada no sistema (~1 MB de stack). Task é uma abstração sobre o ThreadPool que reutiliza threads automaticamente, integra-se com async/await e é a escolha preferida em código .NET moderno."
       sources={sources}

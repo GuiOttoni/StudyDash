@@ -12,7 +12,10 @@ public static class ThreadTaskFeature
     public static void MapThreadTaskFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/concurrency/thread-task/run", RunAsync)
-           .WithTags("Concurrency");
+           .WithTags("Concurrency")
+           .WithSummary("Demo Thread vs Task")
+           .WithDescription("Compara `Thread` manual e `Task.Run` via SSE: executa trabalho paralelo com ambas as abordagens, exibe `ManagedThreadId`, timing e demonstra por que `Task` é a escolha preferida no .NET moderno.")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private static async Task RunAsync(HttpContext http, CancellationToken cancellationToken)

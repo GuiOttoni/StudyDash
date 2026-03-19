@@ -2,7 +2,8 @@ import { CodeSnippet } from "@/components/patterns/CodeSnippet";
 import { SourceLinks } from "@/components/patterns/SourceLinks";
 import { LogRunSection } from "@/components/patterns/LogRunSection";
 import Link from "next/link";
-import { categoryColors } from "@/lib/patterns-data";
+import { getCategoryColor } from "@/lib/category-colors";
+import { Icon } from "@/components/ui/Icon";
 
 const principles = [
   {
@@ -209,10 +210,10 @@ export default async function SolidPage() {
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-4xl">🧱</span>
+          <Icon name="GraduationCap" size={40} strokeWidth={1.5} className="text-zinc-300 shrink-0" />
           <div>
             <h1 className="text-3xl font-bold text-white">Princípios SOLID</h1>
-            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${categoryColors["Clean Code"]}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${getCategoryColor("Clean Code")}`}>
               Clean Code
             </span>
           </div>

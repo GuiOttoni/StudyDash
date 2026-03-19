@@ -11,7 +11,10 @@ public static class MergeSortFeature
     public static void MapMergeSortFeature(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/algorithms/mergesort/run", RunAsync)
-           .WithTags("Algorithms");
+           .WithTags("Algorithms")
+           .WithSummary("Demo Merge Sort")
+           .WithDescription("Ordena um array aleatório via Merge Sort (divide e conquista) com visualização dos passos de divisão e merge via SSE. Parâmetro `size` define o tamanho do array (5–10, padrão 7).")
+           .Produces<string>(200, "text/event-stream");
     }
 
     private static async Task RunAsync(HttpContext http, int size = 7, CancellationToken cancellationToken = default)

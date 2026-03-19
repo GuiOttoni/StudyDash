@@ -1,19 +1,22 @@
-import { PatternGrid } from "@/components/dashboard/PatternGrid";
-import { sections } from "@/lib/patterns-data";
+import { getSections, getStudies } from "@/lib/api";
+import { StudyGrid } from "@/components/dashboard/StudyGrid";
+import { Icon } from "@/components/ui/Icon";
 
-const section = sections.find((s) => s.slug === "concorrencia")!;
+export default async function ConcorrenciaPage() {
+  const [sections, studies] = await Promise.all([getSections(), getStudies("concorrencia")]);
+  const section = sections.find((s) => s.slug === "concorrencia");
+  if (!section) return null;
 
-export default function ConcorrenciaPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <span className="text-4xl">{section.icon}</span>
+          <Icon name={section.icon} size={40} strokeWidth={1.5} className="text-zinc-300 shrink-0" />
           <h1 className="text-4xl font-bold text-white">{section.title}</h1>
         </div>
         <p className="text-zinc-400 text-lg max-w-2xl">{section.description}</p>
       </div>
-      <PatternGrid categories={section.categories} />
+      <StudyGrid studies={studies} />
     </div>
   );
 }
