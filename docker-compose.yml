@@ -61,6 +61,19 @@ services:
       retries: 10
       start_period: 30s
 
+  redis:
+    image: redis:7-alpine
+    container_name: studydash-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - studydash-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   backend:
     build:
       context: ./backend
@@ -72,12 +85,15 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=studydash;Username=studydash;Password=studydash
+      - ConnectionStrings__Redis=redis:6379
       - Messaging__RabbitMq__Host=rabbitmq
       - Messaging__RabbitMq__Username=studydash
       - Messaging__RabbitMq__Password=studydash
       - Messaging__Kafka__BootstrapServers=kafka:9092
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
