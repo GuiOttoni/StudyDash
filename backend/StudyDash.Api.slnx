@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="StudyDash.Messaging/StudyDash.Messaging.csproj" />
   <Project Path="StudyDash.Api/StudyDash.Api.csproj" />
+  <Project Path="StudyDash.WorkerApi/StudyDash.WorkerApi.csproj" />
 </Solution>

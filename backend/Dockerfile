@@ -1,10 +1,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+COPY StudyDash.Messaging/StudyDash.Messaging.csproj StudyDash.Messaging/
 COPY StudyDash.Api/StudyDash.Api.csproj StudyDash.Api/
 RUN dotnet restore StudyDash.Api/StudyDash.Api.csproj
 
-COPY . .
+COPY StudyDash.Messaging/ StudyDash.Messaging/
+COPY StudyDash.Api/ StudyDash.Api/
 RUN dotnet publish StudyDash.Api/StudyDash.Api.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime

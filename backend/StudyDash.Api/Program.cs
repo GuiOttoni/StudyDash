@@ -17,7 +17,9 @@ using StudyDash.Api.Features.Roadmap;
 using StudyDash.Api.Features.Performance.ValueTaskDemo;
 using StudyDash.Api.Features.Arquiteturas.EventDriven;
 using StudyDash.Api.Features.Mensageria.Exchanges;
+using StudyDash.Api.Features.Mensageria.Dlq;
 using StudyDash.Api.Features.Catalog;
+using StudyDash.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +56,9 @@ builder.Services.AddSingleton<SingletonService>();
 // ── Banco de dados ────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ── Mensageria (RabbitMQ + Kafka) ─────────────────────────────────────────────
+builder.Services.AddMessaging(builder.Configuration);
 
 var app = builder.Build();
 
@@ -112,5 +117,6 @@ app.MapEventDrivenFeature();
 
 // ── Mensageria ────────────────────────────────────────────────────────────────
 app.MapExchangePatternsFeature();
+app.MapDlqFeature();
 
 app.Run();

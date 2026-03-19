@@ -18,6 +18,49 @@ services:
       timeout: 5s
       retries: 10
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: studydash-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: studydash
+      RABBITMQ_DEFAULT_PASS: studydash
+    networks:
+      - studydash-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: studydash-kafka
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - studydash-net
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
   backend:
     build:
       context: ./backend
@@ -29,8 +72,35 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=studydash;Username=studydash;Password=studydash
+      - Messaging__RabbitMq__Host=rabbitmq
+      - Messaging__RabbitMq__Username=studydash
+      - Messaging__RabbitMq__Password=studydash
+      - Messaging__Kafka__BootstrapServers=kafka:9092
     depends_on:
       db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - studydash-net
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: StudyDash.WorkerApi/Dockerfile
+    container_name: studydash-worker
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - Messaging__RabbitMq__Host=rabbitmq
+      - Messaging__RabbitMq__Username=studydash
+      - Messaging__RabbitMq__Password=studydash
+      - Messaging__Kafka__BootstrapServers=kafka:9092
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - studydash-net
@@ -55,4 +125,3 @@ services:
 networks:
   studydash-net:
     driver: bridge
-
