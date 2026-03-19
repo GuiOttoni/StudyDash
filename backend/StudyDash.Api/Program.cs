@@ -18,8 +18,12 @@ using StudyDash.Api.Features.Performance.ValueTaskDemo;
 using StudyDash.Api.Features.Arquiteturas.EventDriven;
 using StudyDash.Api.Features.Mensageria.Exchanges;
 using StudyDash.Api.Features.Mensageria.Dlq;
+using StudyDash.Api.Features.Mensageria.CompetingConsumers;
+using StudyDash.Api.Features.Mensageria.ConsumerGroups;
+using StudyDash.Api.Features.Cache.CacheAside;
 using StudyDash.Api.Features.Catalog;
 using StudyDash.Messaging;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +63,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // ── Mensageria (RabbitMQ + Kafka) ─────────────────────────────────────────────
 builder.Services.AddMessaging(builder.Configuration);
+
+// ── Cache (Redis) ─────────────────────────────────────────────────────────────
+builder.Services.AddSingleton<IConnectionMultiplexer>(
+    ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis")!));
 
 var app = builder.Build();
 
@@ -118,5 +126,10 @@ app.MapEventDrivenFeature();
 // ── Mensageria ────────────────────────────────────────────────────────────────
 app.MapExchangePatternsFeature();
 app.MapDlqFeature();
+app.MapCompetingConsumersFeature();
+app.MapConsumerGroupsFeature();
+
+// ── Cache ─────────────────────────────────────────────────────────────────────
+app.MapCacheAsideFeature();
 
 app.Run();

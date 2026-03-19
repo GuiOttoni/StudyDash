@@ -92,6 +92,10 @@ public static class CatalogSeedData
         new() { Slug = "mensageria",   Title = "Mensageria",    Icon = "Mail",        Order = 8,
             Description  = "Sistemas de mensageria — RabbitMQ, Kafka, Exchange Types, DLQ, Outbox Pattern e garantias de entrega.",
             Categories   = ["Mensageria"] },
+
+        new() { Slug = "cache",        Title = "Cache",         Icon = "Database",    Order = 9,
+            Description  = "Estratégias de cache distribuído — Cache-Aside, Write-Through, Write-Behind, Redis e invalidação.",
+            Categories   = ["Cache"] },
     ];
 
     private static List<Study> BuildStudies() =>
@@ -194,16 +198,33 @@ public static class CatalogSeedData
             Description = "Separação de modelos de leitura e escrita — Command/Query segregation, projeções independentes e consistência eventual." },
 
         // ── Mensageria ──────────────────────────────────────────────────────────
-        new() { Slug = "exchange-patterns",  Title = "Exchange Patterns",         Category = "Mensageria",     Order = 21, Available = true,
+        new() { Slug = "exchange-patterns",     Title = "Exchange Patterns",          Category = "Mensageria", Order = 21, Available = true,
             Icon        = "Send",
             Description = "Direct, Fanout e Topic exchanges do RabbitMQ simulados em memória — roteamento de mensagens em ação com comparação RabbitMQ vs Kafka." },
 
-        new() { Slug = "kafka-vs-rabbitmq",  Title = "Kafka vs RabbitMQ",         Category = "Mensageria",     Order = 22, Available = false,
+        new() { Slug = "dlq",                   Title = "Dead Letter Queue",          Category = "Mensageria", Order = 22, Available = true,
+            Icon        = "Inbox",
+            Description = "DLQ com RabbitMQ real via AMQP: declara topologia, publica mensagens, simula falhas com BasicNack(requeue:false) e drena a dead-letter queue com headers x-death." },
+
+        new() { Slug = "competing-consumers",   Title = "Competing Consumers",        Category = "Mensageria", Order = 23, Available = true,
+            Icon        = "Users",
+            Description = "3 workers competindo pela mesma fila RabbitMQ — round-robin com prefetchCount=1, speedup paralelo vs sequencial e escalonamento horizontal sem mudar o producer." },
+
+        new() { Slug = "consumer-groups",       Title = "Consumer Groups",            Category = "Mensageria", Order = 24, Available = true,
+            Icon        = "Network",
+            Description = "Consumer Groups do Kafka com replay: dois grupos independentes lendo o mesmo log a partir do offset 0 — demonstra a diferença fundamental entre Kafka e RabbitMQ." },
+
+        new() { Slug = "kafka-vs-rabbitmq",     Title = "Kafka vs RabbitMQ",          Category = "Mensageria", Order = 25, Available = false,
             Icon        = "Scale",
             Description = "Comparação de throughput, garantias de entrega, replay de mensagens e casos de uso ideais de cada tecnologia." },
 
-        new() { Slug = "outbox-pattern",     Title = "Outbox Pattern",            Category = "Mensageria",     Order = 23, Available = false,
-            Icon        = "Inbox",
+        new() { Slug = "outbox-pattern",        Title = "Outbox Pattern",             Category = "Mensageria", Order = 26, Available = false,
+            Icon        = "ArrowUpFromLine",
             Description = "Garantia transacional de publicação sem XA/2PC — escrita atômica em banco + relay para broker." },
+
+        // ── Cache ────────────────────────────────────────────────────────────────
+        new() { Slug = "cache-aside",           Title = "Cache-Aside Pattern",        Category = "Cache",      Order = 27, Available = true,
+            Icon        = "Database",
+            Description = "Cache-Aside com Redis real: MISS (200ms de banco) → SET no Redis → HIT (< 5ms) → expiração por TTL → ciclo. Compara Cache-Aside, Write-Through, Write-Behind e Read-Through." },
     ];
 }

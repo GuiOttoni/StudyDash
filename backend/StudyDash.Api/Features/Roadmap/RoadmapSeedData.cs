@@ -133,6 +133,13 @@ public static class RoadmapSeedData
             new RoadmapTask { Title = "Idempotência em Consumidores",     Section = "mensageria", Description = "At-least-once delivery no Kafka/RabbitMQ: deduplicação por MessageId, idempotency keys e operações naturalmente idempotentes" },
             new RoadmapTask { Title = "Consumer Groups e Particionamento", Section = "mensageria", Description = "Escalabilidade horizontal com Kafka: cada partição atendida por exatamente um consumer no grupo — paralelismo e ordering" },
             new RoadmapTask { Title = "Schema Registry",                  Section = "mensageria", Description = "Contratos Avro/Protobuf versionados: compatibilidade backward/forward, evolução de schema sem quebrar consumers" },
-            new RoadmapTask { Title = "Competing Consumers",              Section = "mensageria", Description = "Múltiplos workers na mesma fila para escalar processamento — load balancing automático e prefetch para throughput ótimo" }
+            new RoadmapTask { Title = "Competing Consumers",              Section = "mensageria", Description = "Múltiplos workers na mesma fila para escalar processamento — load balancing automático e prefetch para throughput ótimo" },
+
+            // ── Cache ──────────────────────────────────────────────────────────
+            new RoadmapTask { Title = "Redis",                            Section = "cache",      Description = "Estrutura de dados in-memory: Strings, Hashes, Lists, Sets, Sorted Sets — TTL, eviction policies (LRU, LFU) e persistência RDB/AOF" },
+            new RoadmapTask { Title = "Cache-Aside Pattern",              Section = "cache",      Description = "Lazy loading: app verifica cache → MISS → banco → SET → retorna; invalidação por DELETE após write — controle total da aplicação" },
+            new RoadmapTask { Title = "Write-Through e Write-Behind",     Section = "cache",      Description = "Write-Through: escrita síncrona banco+cache; Write-Behind: cache primeiro, banco async — trade-offs de consistência e durabilidade" },
+            new RoadmapTask { Title = "Invalidação de Cache",             Section = "cache",      Description = "Cache stampede (dog-pile), TTL vs evento de invalidação, mutex lock para evitar thundering herd — estratégias para consistência eventual" },
+            new RoadmapTask { Title = "Redis Distributed Cache no .NET",  Section = "cache",      Description = "IDistributedCache com StackExchange.Redis: AddStackExchangeRedisCache, serialização, sliding vs absolute expiration" }
     ];
 }
