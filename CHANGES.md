@@ -1,6 +1,37 @@
 # StudyDash — Changelog
 
-## [Unreleased] — 2026-03-18
+## [Unreleased] — 2026-03-19
+
+### Princípios — Página GRASP
+
+Nova página educacional completa para os **9 Princípios GRASP** de Craig Larman.
+
+#### `Features/Principles/Grasp/GraspFeature.cs`
+- `GET /api/principles/grasp/run` (SSE)
+- Demonstra os 9 princípios com classes C# reais instanciadas em memória:
+  - **IE (Information Expert)**: `GraspInvoice.Total()` — quem tem os dados calcula
+  - **Cr (Creator)**: `GraspOrder.AddLine()` — agregador cria e valida seus componentes
+  - **Ct (Controller)**: `GraspCheckoutController` — recebe evento e delega ao domínio
+  - **LC (Low Coupling)**: `GraspLCOrderService(IGraspPaymentGateway, IGraspMailSender)` — Stripe vs PayPal transparente
+  - **HC (High Cohesion)**: `PriceCalculator`, `OrderRepo`, `OrderMailer` — 1 responsabilidade cada
+  - **Po (Polymorphism)**: `IGraspDiscount` — Percentage, Fixed, Vip, No — zero if/switch
+  - **PF (Pure Fabrication)**: `GraspProductRepository` — domínio puro + infraestrutura isolada
+  - **In (Indirection)**: `GraspEventBus` com `Func<string, string>` — Publisher não conhece Subscribers
+  - **PV (Protected Variations)**: `IGraspStorageProvider` — Local vs S3 transparente
+
+#### `frontend/app/patterns/grasp/page.tsx`
+- Layout custom (mesmo padrão de solid/page.tsx) com Shiki para highlight de código
+- 9 cards coloridos com badge abreviado (IE, Cr, Ct, LC, HC, Po, PF, In, PV)
+- Cada card: descrição, exemplo ✗ ruim / ✓ correto, bloco C# detalhado
+- `LogRunSection` SSE conectado a `/api/principles/grasp/run`
+- `Target` adicionado ao registry de ícones Lucide (`components/ui/Icon.tsx`)
+
+#### `Features/Catalog/CatalogSeedData.cs`
+- Novo Study: `{ slug: "grasp", title: "Princípios GRASP", icon: "Target", order: 13 }`
+
+---
+
+## [Unreleased] — 2026-03-18 (Fase 2)
 
 ### Arquitetura: Server-Driven UI
 
