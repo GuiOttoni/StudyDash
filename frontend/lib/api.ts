@@ -1,4 +1,4 @@
-import type { SectionDto, StudyDto } from "./types";
+import type { SectionDto, StudyDto, StudydashConfigDto, GeneratedStudyContent, AiStudyDto } from "./types";
 
 // Server-side URL: uses INTERNAL_API_URL inside Docker (where localhost:5055 doesn't exist).
 // Falls back to NEXT_PUBLIC_API_URL for local dev without Docker.
@@ -103,6 +103,52 @@ export async function deleteStudy(id: number): Promise<void> {
 
 export async function resetStudies(): Promise<StudyDto[]> {
   const res = await fetch(`${CLIENT_API_URL}/api/studies/reset`, { method: "POST" });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── Config ────────────────────────────────────────────────────────────────────
+
+export async function getConfig(): Promise<StudydashConfigDto> {
+  const res = await fetch(`${CLIENT_API_URL}/api/config`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function patchConfig(patch: Record<string, unknown>): Promise<void> {
+  const res = await fetch(`${CLIENT_API_URL}/api/config`, {
+    method:  "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+// ── AI ────────────────────────────────────────────────────────────────────────
+
+export async function generateStudy(
+  prompt: string
+): Promise<{ study: StudyDto; content: GeneratedStudyContent }> {
+  const res = await fetch(`${CLIENT_API_URL}/api/ai/generate`, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ prompt }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function getAiStudy(slug: string): Promise<AiStudyDto> {
+  const res = await fetch(`${CLIENT_API_URL}/api/ai/study/${slug}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function getAiModels(): Promise<{
+  anthropic: { id: string; label: string }[];
+  google:    { id: string; label: string }[];
+}> {
+  const res = await fetch(`${CLIENT_API_URL}/api/ai/models`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }

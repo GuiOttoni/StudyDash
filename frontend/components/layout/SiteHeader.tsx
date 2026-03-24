@@ -141,6 +141,19 @@ export function SiteHeader({ sections }: Props) {
             <span className="text-base leading-none">⚙️</span>
             <span>Admin</span>
           </Link>
+
+          {/* Settings */}
+          <Link
+            href="/settings"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+              pathname.startsWith("/settings")
+                ? "bg-violet-900/60 text-violet-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+            }`}
+          >
+            <Icon name="Sparkles" size={15} strokeWidth={1.5} />
+            <span>IA</span>
+          </Link>
         </nav>
 
         {/* Theme toggle */}
