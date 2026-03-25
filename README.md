@@ -91,10 +91,10 @@ Use `studydash config` or the Settings UI (`/settings`) to edit it.
 
 Supported providers:
 
-| Provider    | Models                                                      |
-| ----------- | ----------------------------------------------------------- |
+| Provider | Models |
+| --- | --- |
 | `anthropic` | `claude-opus-4-6`, `claude-sonnet-4-6`, `claude-haiku-4-5` |
-| `google`    | `gemini-2.0-flash`, `gemini-1.5-pro`, `gemini-1.5-flash`    |
+| `google` | `gemini-2.0-flash`, `gemini-1.5-pro`, `gemini-1.5-flash` |
 
 ### Skills
 
@@ -141,27 +141,27 @@ The catalog starts empty. Everything is created through the UI or via `studydash
 
 ```text
 studydash/
-├── api/                  ← Hono (Node.js) API
-│   └── src/
-│       ├── routes/       ← catalog.ts · config.ts · ai.ts
-│       ├── ai/
-│       │   ├── skills.ts       ← tool definitions (Claude + Gemini)
-│       │   ├── generate.ts     ← applySkillCall · generateStudy
-│       │   └── providers/
-│       │       ├── claude.ts   ← Anthropic tool_use agentic loop
-│       │       └── gemini.ts   ← Gemini function calling loop
-│       └── db/
-│           ├── schema.ts       ← Drizzle tables (sections, studies, aiStudyContent)
-│           └── client.ts       ← SQLite at ~/.studydash/studydash.db
+├── package/              ← npm package (o que é publicado no npm)
+│   ├── api/src/          ← Hono (Node.js) API
+│   │   ├── routes/       ← catalog.ts · config.ts · ai.ts
+│   │   ├── ai/
+│   │   │   ├── skills.ts       ← tool definitions (Claude + Gemini)
+│   │   │   ├── generate.ts     ← applySkillCall · generateStudy
+│   │   │   └── providers/
+│   │   │       ├── claude.ts   ← Anthropic tool_use agentic loop
+│   │   │       └── gemini.ts   ← Gemini function calling loop
+│   │   └── db/
+│   │       ├── schema.ts       ← Drizzle tables (sections, studies, aiStudyContent)
+│   │       └── client.ts       ← SQLite at ~/.studydash/studydash.db
+│   ├── cli/src/          ← commander CLI (up · down · config · status)
+│   ├── build.mjs         ← esbuild for api + cli, Next.js standalone copy
+│   ├── package.json      ← definição do pacote npm + bin entry
+│   └── tsconfig.json
 │
-├── cli/                  ← commander CLI (up · down · config · status)
-│
-├── frontend/             ← Next.js 16 (App Router, standalone output)
-│   └── app/
-│       ├── settings/     ← 4-tab Settings UI (AI, Skills, Backend, Generate)
-│       └── studies/[slug]  ← AI study renderer
-│
-└── build.mjs             ← esbuild for api + cli, Next.js standalone copy
+└── frontend/             ← Next.js (App Router, standalone output)
+    └── app/
+        ├── settings/     ← 4-tab Settings UI (AI, Skills, Backend, Generate)
+        └── studies/[slug]  ← AI study renderer
 ```
 
 ### AI Generation Flow
@@ -209,13 +209,16 @@ Access at `http://localhost:8085/settings` (or click **IA** in the header).
 git clone https://github.com/your-username/studydash.git
 cd studydash
 
-# Install root deps
+# 1. Install package dependencies (api + cli + build tools)
+cd package
 npm install
 
-# Install frontend deps
-cd frontend && npm install && cd ..
+# 2. Install frontend dependencies
+cd ../frontend
+npm install
 
 # Dev mode (API + frontend with hot reload)
+cd ../package
 npm run dev
 
 # Build for distribution
@@ -228,6 +231,7 @@ npm run build
 ### Local install from source
 
 ```bash
+cd package
 npm run build
 npm install -g .
 studydash up
@@ -259,18 +263,20 @@ studydash up
 ### Manual publish
 
 ```bash
+cd package
 npm run build
 npm publish
 ```
 
 ### Automated publish (CI/CD)
 
-Every push to the `boilerplate-cli` branch that changes `package.json` version triggers a build and `npm publish` via GitHub Actions. See [`.github/workflows/publish.yml`](.github/workflows/publish.yml).
+Every push to the `boilerplate-cli` branch that touches `package/` or `frontend/` triggers a build and `npm publish` via GitHub Actions. See [`.github/workflows/publish.yml`](.github/workflows/publish.yml).
 
 To release a new version:
 
 ```bash
-# Bump version
+# Bump version (run inside package/)
+cd package
 npm version patch   # 0.1.0 → 0.1.1
 # or
 npm version minor   # 0.1.0 → 0.2.0

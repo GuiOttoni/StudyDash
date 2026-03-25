@@ -45,15 +45,15 @@ await build({
 
 // ── Frontend (Next.js standalone) ────────────────────────────────────────────
 console.log('⚙️  Building frontend (this may take a minute)...')
-execSync('npm run build', { cwd: 'frontend', stdio: 'inherit' })
+execSync('npm run build', { cwd: '../frontend', stdio: 'inherit' })
 
 const frontendDist = `${dist}/frontend`
 mkdirSync(frontendDist, { recursive: true })
 
 // standalone output: servidor Node.js auto-contido
-cpSync('frontend/.next/standalone/.', frontendDist, { recursive: true })
+cpSync('../frontend/.next/standalone/.', frontendDist, { recursive: true })
 // static assets precisam ser copiados manualmente
-cpSync('frontend/.next/static', join(frontendDist, '.next', 'static'), { recursive: true })
-cpSync('frontend/public', join(frontendDist, 'public'), { recursive: true })
+cpSync('../frontend/.next/static', join(frontendDist, '.next', 'static'), { recursive: true })
+cpSync('../frontend/public', join(frontendDist, 'public'), { recursive: true })
 
 console.log('✅ Build complete → dist/')

@@ -5,12 +5,8 @@ on:
     branches:
       - boilerplate-cli
     paths:
-      - 'api/**'
-      - 'cli/**'
+      - 'package/**'
       - 'frontend/**'
-      - 'build.mjs'
-      - 'package.json'
-      - 'package-lock.json'
 
 jobs:
   publish:
@@ -27,18 +23,22 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
+          cache-dependency-path: package/package-lock.json
 
-      - name: Install root dependencies
+      - name: Install package dependencies
+        working-directory: package
         run: npm ci
 
       - name: Install frontend dependencies
-        run: npm ci
         working-directory: frontend
+        run: npm ci
 
       - name: Build
+        working-directory: package
         run: npm run build
 
       - name: Publish to npm
+        working-directory: package
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

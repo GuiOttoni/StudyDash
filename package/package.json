@@ -18,9 +18,9 @@
     "build":          "node build.mjs",
     "build:api":      "npx esbuild api/src/index.ts --bundle --platform=node --target=node20 --outfile=dist/api.js --external:better-sqlite3 --external:@anthropic-ai/sdk --external:@google/generative-ai --format=esm",
     "build:cli":      "npx esbuild cli/src/index.ts --bundle --platform=node --target=node20 --outfile=dist/cli/index.js --format=esm",
-    "build:frontend": "cd frontend && npm run build && cp -r .next/standalone/. ../dist/frontend && cp -r .next/static ../dist/frontend/.next/static && cp -r public ../dist/frontend/public",
+    "build:frontend": "cd ../frontend && npm run build && cp -r .next/standalone/. ../package/dist/frontend && cp -r .next/static ../package/dist/frontend/.next/static && cp -r public ../package/dist/frontend/public",
     "dev:api":        "npx tsx watch api/src/index.ts",
-    "dev:frontend":   "cd frontend && npm run dev",
+    "dev:frontend":   "cd ../frontend && npm run dev",
     "dev":            "concurrently \"npm run dev:api\" \"npm run dev:frontend\""
   },
   "dependencies": {
