@@ -1,304 +1,286 @@
 # StudyDash
 
-Dashboard educacional interativo para estudo de conceitos de engenharia de software em .NET e C#.
-Cada tópico tem explicação, exemplos de código com syntax highlighting (Shiki) e uma demonstração
-ao vivo via **Server-Sent Events** que executa o código real no backend.
-
----
-
-## Stack
-
-| Camada      | Tecnologia                                                  |
-|-------------|-------------------------------------------------------------|
-| Frontend    | Next.js 16 (App Router), React 19, TypeScript, Tailwind v4 |
-| Highlight   | Shiki (server-side, zero JS no cliente)                     |
-| Ícones      | Lucide React (registry curado, tree-shaking seguro)         |
-| Backend API | .NET 10, ASP.NET Core Minimal APIs, EF Core 9               |
-| Worker      | .NET 10, BackgroundService (RabbitMQ + Kafka consumers)     |
-| Banco       | PostgreSQL 16 (via Docker Compose)                          |
-| Mensageria  | RabbitMQ 3 (AMQP real) + Apache Kafka 3.8 (KRaft)          |
-| Streaming   | Server-Sent Events (SSE)                                    |
-
----
-
-## Como rodar
-
-### Pré-requisitos
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Node.js 20+](https://nodejs.org/)
-
-### Com Docker Compose (recomendado)
+Self-hosted learning dashboard with AI-powered study generation.
+Install once, run anywhere — no Docker, no databases to configure.
 
 ```bash
-docker compose up --build
+npm install -g studydash
+studydash up
 ```
 
-| Serviço               | URL                                        |
-|-----------------------|--------------------------------------------|
-| Frontend              | <http://localhost:3055>                    |
-| Backend API           | <http://localhost:5055>                    |
-| API Docs (Scalar)     | <http://localhost:5055/scalar>             |
-| RabbitMQ Management   | <http://localhost:15672> (studydash/studydash) |
-| Kafka (externo)       | `localhost:9094`                           |
+---
 
-> Para parar: `docker compose down`
+## Requirements
 
-### Em desenvolvimento local
+- **Node.js 20+**
+- An API key from [Anthropic](https://console.anthropic.com/) or [Google AI Studio](https://aistudio.google.com/)
+
+---
+
+## Quick Start
 
 ```bash
-# 1. Infraestrutura (banco + brokers)
-docker compose up -d db rabbitmq kafka
+# 1. Install globally
+npm install -g studydash
 
-# 2. Backend API
-cd backend/StudyDash.Api
-dotnet run
-# Disponível em http://localhost:5055
+# 2. Configure your AI provider and API key
+studydash config
 
-# 3. Worker (em outro terminal)
-cd backend/StudyDash.WorkerApi
-dotnet run
-
-# 4. Frontend
-cd frontend
-npm install
-npm run dev
-# Disponível em http://localhost:3000
+# 3. Start
+studydash up
+# → API running at  http://localhost:5055
+# → Dashboard at    http://localhost:8085
 ```
 
 ---
 
-## Conteúdo disponível
+## CLI Commands
 
-### Princípios
-
-| Slug            | Título               | Demo SSE |
-|-----------------|----------------------|:--------:|
-| `solid`         | Princípios SOLID     | ✓        |
-| `oop-pillars`   | 4 Pilares da POO     | ✓        |
-| `grasp`         | Princípios GRASP     | ✓        |
-| `di-lifetimes`  | DI Lifetimes         | ✓        |
-
-### Padrões GoF
-
-| Slug        | Título    | Demo SSE |
-|-------------|-----------|:--------:|
-| `builder`   | Builder   | ✓        |
-| `singleton` | Singleton | ✓        |
-
-### Algoritmos
-
-| Slug          | Título      | Demo SSE |
-|---------------|-------------|:--------:|
-| `bubble-sort` | Bubble Sort | ✓        |
-| `merge-sort`  | Merge Sort  | ✓        |
-
-### Memória
-
-| Slug                   | Título                    | Demo SSE |
-|------------------------|---------------------------|:--------:|
-| `heap-stack`           | Heap vs Stack             | ✓        |
-| `garbage-collection`   | Garbage Collection        | ✓        |
-| `record-class-struct`  | Record vs Class vs Struct | ✓        |
-
-### Concorrência
-
-| Slug             | Título          | Demo SSE |
-|------------------|-----------------|:--------:|
-| `thread-task`    | Thread vs Task  | ✓        |
-| `parallel-tasks` | Parallel Tasks  | ✓        |
-
-### Performance
-
-| Slug         | Título            | Demo SSE |
-|--------------|-------------------|:--------:|
-| `value-task` | ValueTask vs Task | ✓        |
-
-### Arquiteturas
-
-| Slug           | Título                    | Demo SSE |
-|----------------|---------------------------|:--------:|
-| `event-driven` | Event-Driven Architecture | ✓        |
-
-### Mensageria
-
-| Slug                | Título                        | Demo SSE | Infra real |
-|---------------------|-------------------------------|:--------:|:----------:|
-| `exchange-patterns` | Exchange Patterns (simulado)  | ✓        |            |
-| `dlq`               | Dead Letter Queue             | ✓        | ✓ RabbitMQ |
+| Command | Description |
+| ------- | ----------- |
+| `studydash up` | Start the API and frontend |
+| `studydash down` | Stop all processes |
+| `studydash config` | Interactive wizard: provider, API key, model, skills, ports |
+| `studydash status` | Show running processes and current configuration |
 
 ---
 
-## Arquitetura do Backend — Vertical Slices + Módulo de Mensageria
+## Generating Studies
 
-```
-backend/
-├── StudyDash.Messaging/           ← class library compartilhada
-│   ├── MessagingExtensions.cs     ← AddMessaging() — entry point DI
-│   ├── MessagingOptions.cs
-│   ├── RabbitMq/
-│   │   ├── RabbitMqOptions.cs
-│   │   └── RabbitMqConnectionManager.cs   ← singleton, async lazy-init
-│   └── Kafka/
-│       ├── KafkaOptions.cs
-│       └── KafkaProducerService.cs        ← singleton IProducer<string,string>
-│
-├── StudyDash.Api/                 ← ASP.NET Core Minimal APIs
-│   ├── Features/
-│   │   ├── Catalog/               ← CRUD Seções e Studies (PostgreSQL + EF Core)
-│   │   ├── Roadmap/               ← Tasks do roadmap + AppDbContext
-│   │   ├── Principles/
-│   │   ├── Patterns/
-│   │   ├── Algorithms/
-│   │   ├── Memory/
-│   │   ├── Concurrency/
-│   │   ├── Performance/
-│   │   ├── Arquiteturas/
-│   │   └── Mensageria/
-│   │       ├── Exchanges/         ← GET /api/mensageria/exchanges/run (simulado)
-│   │       └── Dlq/               ← GET /api/mensageria/dlq/run (AMQP real)
-│   └── Program.cs                 ← registra todos os slices via MapXxxFeature()
-│
-└── StudyDash.WorkerApi/           ← .NET Worker Service (consumers em background)
-    ├── Workers/
-    │   ├── RabbitMqOrderWorker.cs ← consome studydash.orders; 30% falha → DLQ
-    │   └── KafkaStudyEventWorker.cs ← consumer group studydash-workers
-    └── Program.cs
-```
+### Via the Dashboard UI
 
-### Módulo de mensageria (`StudyDash.Messaging`)
+1. Open `http://localhost:8085`
+2. Click **IA** in the header
+3. Go to the **Gerar Estudo** tab
+4. Describe the topic and click **Gerar estudo**
 
-Registrado em ambos os projetos com uma única chamada:
+The study is saved and appears in the catalog at `/studies/{slug}`.
 
-```csharp
-builder.Services.AddMessaging(builder.Configuration);
-```
+### What the AI generates
 
-Provê:
+Each study is assembled by the AI using a set of **skills** (tool calls):
 
-- `RabbitMqConnectionManager` — singleton com async lazy-init via `SemaphoreSlim`; canais criados por-request com `CreateChannelAsync()`
-- `KafkaProducerService` — singleton thread-safe com `Flush(5s)` no dispose
+| Skill | Content |
+| ----- | ------- |
+| `set_metadata` | Title, slug, category, icon, description |
+| `add_explanation` | Text sections with optional tip/warning callouts and bullet lists |
+| `add_code_snippet` | Syntax-highlighted code examples with title and description |
+| `add_comparison` | Side-by-side comparison tables with pros/cons |
+| `add_quiz` | Multiple-choice questions with answers and explanations |
 
-### Cada slice expõe um extension method sobre `IEndpointRouteBuilder`
-
-```csharp
-// Program.cs
-app.MapBuilderFeature();
-app.MapDlqFeature();
-// ...
-
-// Features/Mensageria/Dlq/DlqFeature.cs
-public static class DlqFeature
-{
-    public static void MapDlqFeature(this IEndpointRouteBuilder app)
-        => app.MapGet("/api/mensageria/dlq/run", RunAsync)
-              .WithTags("Mensageria");
-}
-```
+You can enable or disable individual skills in **Settings → Skills**.
 
 ---
 
-## Arquitetura do Frontend — RSC + Client Islands
+## Configuration
 
-```
-page.tsx (RSC — Server Component)
-├── AlgorithmLayout / custom layout   ← RSC: título, badge, explicação
-├── blocos <code> via Shiki           ← RSC: highlight zero JS no cliente
-├── SourceLinks                       ← RSC: links externos
-└── LogRunSection                     ← Client Component: SSE, estado, EventSource
-```
+Configuration is stored at `~/.studydash/config.json`.
+Use `studydash config` or the Settings UI (`/settings`) to edit it.
 
----
-
-## Arquitetura de Streaming (SSE)
-
-```
-Browser              Next.js :3055          .NET API :5055
-  │                       │                      │
-  │── GET /patterns/dlq ──▶│                      │
-  │◀── HTML estático ──────│                      │
-  │                       │                      │
-  │── new EventSource() ───────────────────────▶ │
-  │◀──────────── data: » Fase 1 — Declarando... ─ │  (AMQP real com RabbitMQ)
-  │◀──────────── data:   ✓ Exchange declarado... ─ │
-  │◀──────────── data: [DONE] ─────────────────── │
-  │── es.close() ──────────│                      │
-```
-
----
-
-## Server-Driven UI
-
-A navegação e os metadados dos cards são controlados pelo backend:
-
-```
-GET /api/sections           → lista de seções ordenadas
-GET /api/studies?section=   → studies filtrados por seção
-```
-
-O frontend (Next.js RSC) faz fetch server-side — sem BFF separado.
-Para adicionar um novo conteúdo:
-
-1. Inserir o Study via `/admin` ou `CatalogSeedData.cs`
-2. Criar `app/patterns/{slug}/page.tsx`
-3. Criar `Features/{categoria}/{nome}Feature.cs` com a rota SSE
-
-Zero mudanças em union types, navegação ou componentes existentes.
-
----
-
-## Admin
-
-Acesse `/admin` para gerenciar Seções e Studies via interface visual:
-
-- Criar, editar e remover seções e studies
-- Select de ícones Lucide com preview ao vivo
-- Toggle Disponível/Bloqueado por study
-
----
-
-## Variáveis de ambiente
-
-### Frontend (`frontend/.env.local`)
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5055
-```
-
-### Backend (`backend/StudyDash.Api/appsettings.json`)
+### AI Provider
 
 ```json
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=studydash;Username=studydash;Password=studydash"
-  },
-  "Messaging": {
-    "RabbitMq": { "Host": "localhost", "Port": 5672, "Username": "studydash", "Password": "studydash" },
-    "Kafka": { "BootstrapServers": "localhost:9094" }
+  "ai": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "apiKey": "sk-ant-..."
   }
 }
 ```
 
-> Em Docker, as variáveis `Messaging__RabbitMq__Host=rabbitmq` e `Messaging__Kafka__BootstrapServers=kafka:9092` sobrescrevem os defaults via env vars do `docker-compose.yml`.
+Supported providers:
+
+| Provider    | Models                                                      |
+| ----------- | ----------------------------------------------------------- |
+| `anthropic` | `claude-opus-4-6`, `claude-sonnet-4-6`, `claude-haiku-4-5` |
+| `google`    | `gemini-2.0-flash`, `gemini-1.5-pro`, `gemini-1.5-flash`    |
+
+### Skills
+
+```json
+{
+  "ai": {
+    "skills": {
+      "codeSnippet": true,
+      "comparison":  true,
+      "quiz":        true,
+      "explanation": true,
+      "diagram":     false
+    }
+  }
+}
+```
+
+### Ports
+
+```json
+{
+  "backend":  { "port": 5055 },
+  "frontend": { "port": 8085 }
+}
+```
 
 ---
 
-## Observar o Worker em tempo real
+## Data Storage
 
-```bash
-docker logs studydash-worker -f
-```
+All data lives at `~/.studydash/`:
 
-Exemplo de saída:
+| Path | Contents |
+| ---- | -------- |
+| `~/.studydash/config.json` | Configuration (provider, API key, ports, skills) |
+| `~/.studydash/studydash.db` | SQLite database (catalog sections, studies, AI content) |
+| `~/.studydash/.pids` | Running process PIDs (used by `up`/`down`/`status`) |
+
+The catalog starts empty. Everything is created through the UI or via `studydash generate`.
+
+---
+
+## Architecture
 
 ```text
-[RabbitMqOrderWorker] 10 pedidos publicados em 'studydash.orders.exchange'.
-[RabbitMqOrderWorker] ACK  → orderId=1 processado com sucesso
-[RabbitMqOrderWorker] NACK → orderId=3 falhou processamento → DLQ
-[KafkaStudyEventWorker] EVENT recebido → key=user-1 offset=0 | {"tipo":"study.started",...}
+studydash/
+├── api/                  ← Hono (Node.js) API
+│   └── src/
+│       ├── routes/       ← catalog.ts · config.ts · ai.ts
+│       ├── ai/
+│       │   ├── skills.ts       ← tool definitions (Claude + Gemini)
+│       │   ├── generate.ts     ← applySkillCall · generateStudy
+│       │   └── providers/
+│       │       ├── claude.ts   ← Anthropic tool_use agentic loop
+│       │       └── gemini.ts   ← Gemini function calling loop
+│       └── db/
+│           ├── schema.ts       ← Drizzle tables (sections, studies, aiStudyContent)
+│           └── client.ts       ← SQLite at ~/.studydash/studydash.db
+│
+├── cli/                  ← commander CLI (up · down · config · status)
+│
+├── frontend/             ← Next.js 16 (App Router, standalone output)
+│   └── app/
+│       ├── settings/     ← 4-tab Settings UI (AI, Skills, Backend, Generate)
+│       └── studies/[slug]  ← AI study renderer
+│
+└── build.mjs             ← esbuild for api + cli, Next.js standalone copy
+```
+
+### AI Generation Flow
+
+```text
+User prompt
+    │
+    ▼
+generateStudy(prompt)
+    │
+    ├─ provider: anthropic ──▶ Anthropic tool_use loop
+    │                               AI calls: set_metadata → add_explanation
+    │                                          → add_code_snippet → add_comparison
+    │                                          → add_quiz (× N iterations)
+    │
+    └─ provider: google ────▶ Gemini function calling loop
+                                    same skills as FunctionDeclarations
+
+applySkillCall() assembles GeneratedStudy object
+    │
+    ▼
+Saved to ~/.studydash/studydash.db
+Accessible at /studies/{slug}
 ```
 
 ---
 
-Veja [CHANGES.md](CHANGES.md) para o histórico detalhado de alterações.
+## Settings UI
+
+Access at `http://localhost:8085/settings` (or click **IA** in the header).
+
+| Tab | Contents |
+| --- | -------- |
+| **Inteligência Artificial** | Provider, API key, model selection |
+| **Skills** | Toggle individual skills on/off |
+| **Backend** | API and frontend port numbers |
+| **Gerar Estudo** | Prompt textarea → trigger AI study generation |
+
+---
+
+## Development
+
+```bash
+# Clone
+git clone https://github.com/your-username/studydash.git
+cd studydash
+
+# Install root deps
+npm install
+
+# Install frontend deps
+cd frontend && npm install && cd ..
+
+# Dev mode (API + frontend with hot reload)
+npm run dev
+
+# Build for distribution
+npm run build
+# → dist/api.js        (Hono API, bundled)
+# → dist/cli/index.js  (CLI binary)
+# → dist/frontend/     (Next.js standalone)
+```
+
+### Local install from source
+
+```bash
+npm run build
+npm install -g .
+studydash up
+```
+
+---
+
+## Publishing to npm
+
+### One-time setup
+
+1. Create an account at [npmjs.com](https://www.npmjs.com/)
+
+2. Login from your terminal:
+
+   ```bash
+   npm login
+   ```
+
+3. Generate an **Automation token** (for CI):
+   - Go to npmjs.com → Account → Access Tokens → Generate New Token → **Automation**
+   - Copy the token
+
+4. Add the token as a GitHub secret:
+   - Repository → Settings → Secrets and variables → Actions → New secret
+   - Name: `NPM_TOKEN`
+   - Value: the token you copied
+
+### Manual publish
+
+```bash
+npm run build
+npm publish
+```
+
+### Automated publish (CI/CD)
+
+Every push to the `boilerplate-cli` branch that changes `package.json` version triggers a build and `npm publish` via GitHub Actions. See [`.github/workflows/publish.yml`](.github/workflows/publish.yml).
+
+To release a new version:
+
+```bash
+# Bump version
+npm version patch   # 0.1.0 → 0.1.1
+# or
+npm version minor   # 0.1.0 → 0.2.0
+
+# Push (triggers CI)
+git push origin boilerplate-cli --tags
+```
+
+---
+
+## License
+
+MIT
