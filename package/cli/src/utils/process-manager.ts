@@ -28,11 +28,11 @@ export function killProcess(pid: number): void {
 }
 
 // Aguarda um processo HTTP subir (health check com retry)
-export async function waitForPort(port: number, timeoutMs = 15_000): Promise<boolean> {
+export async function waitForPort(port: number, timeoutMs = 15_000, path = '/health'): Promise<boolean> {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(`http://localhost:${port}/health`, { signal: AbortSignal.timeout(500) })
+      const res = await fetch(`http://localhost:${port}${path}`, { signal: AbortSignal.timeout(500) })
       if (res.ok) return true
     } catch { /* ainda não está pronto */ }
     await new Promise(r => setTimeout(r, 300))

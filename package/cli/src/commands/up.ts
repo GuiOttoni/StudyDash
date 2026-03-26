@@ -50,7 +50,7 @@ export async function cmdUp(): Promise<void> {
   })
   frontProc.unref()
 
-  const frontReady = await waitForPort(cfg.frontend.port, 15_000)
+  const frontReady = await waitForPort(cfg.frontend.port, 15_000, '/')
   if (!frontReady) {
     spinner.fail('Frontend não iniciou a tempo.')
     apiProc.kill()
