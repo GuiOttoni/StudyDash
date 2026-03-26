@@ -18,7 +18,7 @@ await build({
   platform:    'node',
   target:      'node20',
   outfile:     `${dist}/api.js`,
-  format:      'esm',
+  format:      'cjs',
   // native addons e SDKs grandes ficam como external — instalados com o pacote
   external: [
     'better-sqlite3',
@@ -35,8 +35,9 @@ await build({
   platform:    'node',
   target:      'node20',
   outfile:     `${dist}/cli/index.js`,
-  format:      'esm',
-  external:    ['better-sqlite3', '@anthropic-ai/sdk', '@google/generative-ai'],
+  format:      'cjs',
+  // todos os pacotes npm ficam como require() — instalados como dependências
+  packages:    'external',
   banner: {
     // shebang para que o arquivo seja executável como binário
     js: '#!/usr/bin/env node',

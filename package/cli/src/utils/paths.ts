@@ -1,11 +1,5 @@
-import { createRequire }  from 'module'
-import { dirname, join }  from 'path'
-import { fileURLToPath }  from 'url'
-import { homedir }        from 'os'
-
-// __dirname equivalente em ESM
-const __filename = fileURLToPath(import.meta.url)
-const __dirname  = dirname(__filename)
+import { join }    from 'path'
+import { homedir } from 'os'
 
 // Raiz do pacote instalado (onde dist/ está)
 // dist/cli/index.js → ../../  =  raiz do pacote
