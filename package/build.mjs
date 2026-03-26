@@ -16,12 +16,11 @@ await build({
   entryPoints: ['api/src/index.ts'],
   bundle:      true,
   platform:    'node',
-  target:      'node20',
+  target:      'node22',
   outfile:     `${dist}/api.js`,
   format:      'cjs',
-  // native addons e SDKs grandes ficam como external — instalados com o pacote
+  // node:sqlite é built-in; SDKs de AI ficam como external (instalados com o pacote)
   external: [
-    'better-sqlite3',
     '@anthropic-ai/sdk',
     '@google/generative-ai',
   ],
@@ -33,7 +32,7 @@ await build({
   entryPoints: ['cli/src/index.ts'],
   bundle:      true,
   platform:    'node',
-  target:      'node20',
+  target:      'node22',
   outfile:     `${dist}/cli/index.js`,
   format:      'cjs',
   // todos os pacotes npm ficam como require() — instalados como dependências

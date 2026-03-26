@@ -1,8 +1,6 @@
 import { Hono }          from 'hono'
-import { streamText }    from 'hono/streaming'
-import { eq }            from 'drizzle-orm'
 import { db }            from '../db/client.js'
-import { studies, aiStudyContent } from '../db/schema.js'
+import type { Study, AiStudyContent } from '../db/schema.js'
 import { generateStudy } from '../ai/generate.js'
 import { readConfig }    from '../utils/config.js'
 
@@ -25,49 +23,50 @@ ai.post('/generate', async (c) => {
 
   const result = await generateStudy(prompt, cfg)
 
-  // Persiste conteúdo gerado
-  await db.insert(aiStudyContent).values({
-    studySlug:   result.metadata.slug,
-    content:     JSON.stringify(result),
-    generatedBy: `${cfg.ai.provider}:${cfg.ai.model}`,
+  // Upsert conteúdo gerado
+  db.prepare(`
+    INSERT INTO ai_study_content (study_slug, content, generated_by, prompt, created_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(study_slug) DO UPDATE SET
+      content      = excluded.content,
+      generated_by = excluded.generated_by,
+      prompt       = excluded.prompt,
+      created_at   = excluded.created_at
+  `).run(
+    result.metadata.slug,
+    JSON.stringify(result),
+    `${cfg.ai.provider}:${cfg.ai.model}`,
     prompt,
-    createdAt:   Date.now(),
-  }).onConflictDoUpdate({
-    target: aiStudyContent.studySlug,
-    set: {
-      content:     JSON.stringify(result),
-      generatedBy: `${cfg.ai.provider}:${cfg.ai.model}`,
-      prompt,
-      createdAt:   Date.now(),
-    },
-  })
+    Date.now(),
+  )
 
   // Upsert no catálogo
-  const [study] = await db.insert(studies).values({
-    slug:        result.metadata.slug,
-    title:       result.metadata.title,
-    icon:        result.metadata.icon,
-    category:    result.metadata.category,
-    description: result.metadata.description,
-    available:   true,
-    order:       Date.now(), // novo study aparece no final
-  }).onConflictDoUpdate({
-    target: studies.slug,
-    set: {
-      title:       result.metadata.title,
-      icon:        result.metadata.icon,
-      category:    result.metadata.category,
-      description: result.metadata.description,
-    },
-  }).returning()
+  db.prepare(`
+    INSERT INTO studies (slug, title, icon, category, description, available, "order")
+    VALUES (?, ?, ?, ?, ?, 1, ?)
+    ON CONFLICT(slug) DO UPDATE SET
+      title       = excluded.title,
+      icon        = excluded.icon,
+      category    = excluded.category,
+      description = excluded.description
+  `).run(
+    result.metadata.slug,
+    result.metadata.title,
+    result.metadata.icon,
+    result.metadata.category,
+    result.metadata.description,
+    Date.now(),
+  )
+
+  const study = db.prepare('SELECT * FROM studies WHERE slug = ?').get(result.metadata.slug) as Study
 
   return c.json({ study, content: result })
 })
 
 // GET /api/ai/study/:slug — retorna conteúdo gerado por IA para o renderer dinâmico
-ai.get('/study/:slug', async (c) => {
+ai.get('/study/:slug', (c) => {
   const slug = c.req.param('slug')
-  const [row] = await db.select().from(aiStudyContent).where(eq(aiStudyContent.studySlug, slug))
+  const row  = db.prepare('SELECT * FROM ai_study_content WHERE study_slug = ?').get(slug) as AiStudyContent | undefined
   if (!row) return c.json({ error: 'Study não encontrado' }, 404)
   return c.json({ ...row, content: JSON.parse(row.content) })
 })
