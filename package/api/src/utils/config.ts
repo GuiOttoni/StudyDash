@@ -5,6 +5,13 @@ import { join }    from 'path'
 export const STUDYDASH_DIR = join(homedir(), '.studydash')
 export const CONFIG_PATH   = join(STUDYDASH_DIR, 'config.json')
 
+export interface FallbackProvider {
+  label?:   string
+  provider: 'anthropic' | 'google' | 'cli'
+  apiKey:   string
+  model:    string
+}
+
 export interface StudydashConfig {
   backend: {
     port: number
@@ -13,8 +20,11 @@ export interface StudydashConfig {
   frontend: {
     port: number
   }
+  codePath: string
   ai: {
-    provider: 'anthropic' | 'google'
+    // 'cli' usa o Claude Code CLI já instalado/autenticado na máquina do
+    // desenvolvedor — não precisa de apiKey.
+    provider: 'anthropic' | 'google' | 'cli'
     apiKey:   string
     model:    string
     // Skills que a IA pode usar ao gerar um estudo
@@ -25,16 +35,19 @@ export interface StudydashConfig {
       diagram:       boolean
       explanation:   boolean
     }
+    fallbacks: FallbackProvider[]
   }
 }
 
 const DEFAULT_CONFIG: StudydashConfig = {
   backend:  { port: 5055, host: 'localhost' },
   frontend: { port: 8085 },
+  codePath: '',
   ai: {
     provider: 'anthropic',
     apiKey:   '',
-    model:    'claude-sonnet-4-6',
+    model:    'gemini-2.5-flash',
+    fallbacks: [],
     skills: {
       codeSnippet:  true,
       comparison:   true,

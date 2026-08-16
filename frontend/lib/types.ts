@@ -29,15 +29,25 @@ export interface AISkills {
   explanation:  boolean;
 }
 
+export interface FallbackProviderDto {
+  label:      string;
+  provider:   "anthropic" | "google";
+  model:      string;
+  hasApiKey:  boolean;
+  apiKeyHint: string | null;
+}
+
 export interface StudydashConfigDto {
   backend:  { port: number; host: string };
   frontend: { port: number };
+  codePath: string;
   ai: {
-    provider:   "anthropic" | "google";
+    provider:   "anthropic" | "google" | "cli";
     model:      string;
     hasApiKey:  boolean;
     apiKeyHint: string | null;
     skills:     AISkills;
+    fallbacks:  FallbackProviderDto[];
   };
 }
 
@@ -77,12 +87,19 @@ export interface QuizQuestion {
   explanation?: string;
 }
 
+export interface RunnableCode {
+  filename:     string;
+  code:         string;
+  description?: string;
+}
+
 export interface GeneratedStudyContent {
   metadata:     StudyMetadata;
   explanations: ExplanationSection[];
   codeSnippets: CodeSnippet[];
   comparisons:  ComparisonTable[];
   quiz:         QuizQuestion[];
+  runnableCode?: RunnableCode;
 }
 
 export interface AiStudyDto {

@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI, FunctionCallingMode } from '@google/generative-ai'
 import type { Skill, GeneratedStudy }              from '../skills.js'
 import { applySkillCall }                          from '../generate.js'
+import type { LogFn }                              from '../generate.js'
 
-// Converte o formato Skill (baseado no Claude SDK) para FunctionDeclaration do Gemini
 function toGeminiFunctions(skills: Skill[]) {
   return skills.map(s => ({
     name:        s.name,
@@ -20,7 +20,6 @@ function toGeminiFunctions(skills: Skill[]) {
   }))
 }
 
-// Mapeia tipos JSON Schema → tipos Gemini
 function geminiType(prop: Record<string, unknown>): Record<string, unknown> {
   if (prop.type === 'array') {
     return {
@@ -43,16 +42,9 @@ function geminiType(prop: Record<string, unknown>): Record<string, unknown> {
     }
   }
   const typeMap: Record<string, string> = {
-    string:  'STRING',
-    number:  'NUMBER',
-    boolean: 'BOOLEAN',
-    integer: 'INTEGER',
+    string: 'STRING', number: 'NUMBER', boolean: 'BOOLEAN', integer: 'INTEGER',
   }
-  return {
-    type:        typeMap[prop.type as string] ?? 'STRING',
-    description: prop.description,
-    enum:        prop.enum,
-  }
+  return { type: typeMap[prop.type as string] ?? 'STRING', description: prop.description, enum: prop.enum }
 }
 
 export async function generateWithGemini(
@@ -61,6 +53,7 @@ export async function generateWithGemini(
   apiKey:  string,
   skills:  Skill[],
   system:  string,
+  log?:    LogFn,
 ): Promise<GeneratedStudy> {
   const genAI    = new GoogleGenerativeAI(apiKey)
   const gemModel = genAI.getGenerativeModel({
@@ -78,24 +71,22 @@ export async function generateWithGemini(
     quiz:         [],
   }
 
+  log?.('📡 Consultando Gemini...')
+
   const chat = gemModel.startChat()
   let result = await chat.sendMessage(prompt)
 
-  // Loop de function calling — equivalente ao tool_use loop do Claude
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const calls = result.response.functionCalls()
     if (!calls || calls.length === 0) break
 
     const responses = []
     for (const call of calls) {
-      applySkillCall(study, call.name, call.args as Record<string, unknown>)
+      applySkillCall(study, call.name, call.args as Record<string, unknown>, log)
       responses.push({ name: call.name, response: { result: 'ok' } })
     }
 
-    result = await chat.sendMessage(
-      responses.map(r => ({ functionResponse: r }))
-    )
+    result = await chat.sendMessage(responses.map(r => ({ functionResponse: r })))
   }
 
   return study

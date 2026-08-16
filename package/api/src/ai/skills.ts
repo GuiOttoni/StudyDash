@@ -116,6 +116,20 @@ export const SKILL_ADD_QUIZ: Skill = {
   },
 }
 
+export const SKILL_ADD_RUNNABLE: Skill = {
+  name:        'add_runnable_code',
+  description: 'Gera um script Node.js auto-contido (sem requires externos) que demonstra o padrão em ação com console.log detalhados em cada etapa.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      filename:    { type: 'string', description: 'Nome do arquivo, ex: singleton-pattern.js' },
+      code:        { type: 'string', description: 'Script Node.js completo, auto-contido (sem require/import de pacotes externos), com console.log mostrando cada etapa do padrão em ação. Deve ser educativo e executável diretamente com node.' },
+      description: { type: 'string', description: 'O que o script demonstra ao ser executado' },
+    },
+    required: ['filename', 'code'],
+  },
+}
+
 // ── Seletor baseado nas skills habilitadas na config ─────────────────────────
 
 export function buildSkillList(enabled: {
@@ -129,6 +143,7 @@ export function buildSkillList(enabled: {
   if (enabled.codeSnippet) skills.push(SKILL_ADD_CODE)
   if (enabled.comparison)  skills.push(SKILL_ADD_COMPARISON)
   if (enabled.quiz)        skills.push(SKILL_ADD_QUIZ)
+  skills.push(SKILL_ADD_RUNNABLE)
   return skills
 }
 
@@ -168,10 +183,17 @@ export interface QuizQuestion {
   explanation?: string
 }
 
+export interface RunnableCode {
+  filename:     string
+  code:         string
+  description?: string
+}
+
 export interface GeneratedStudy {
   metadata:     StudyMetadata
   explanations: ExplanationSection[]
   codeSnippets: CodeSnippet[]
   comparisons:  ComparisonTable[]
   quiz:         QuizQuestion[]
+  runnableCode?: RunnableCode
 }

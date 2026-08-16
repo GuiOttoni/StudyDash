@@ -16,6 +16,9 @@ using StudyDash.Api.Features.Concurrency.ParallelTasks;
 using StudyDash.Api.Features.Roadmap;
 using StudyDash.Api.Features.Performance.ValueTaskDemo;
 using StudyDash.Api.Features.Arquiteturas.EventDriven;
+using StudyDash.Api.Features.Arquiteturas.HexagonalArchitecture;
+using StudyDash.Api.Features.Arquiteturas.MediatR;
+using StudyDash.Api.Features.Arquiteturas.Microkernel;
 using StudyDash.Api.Features.Mensageria.Exchanges;
 using StudyDash.Api.Features.Mensageria.Dlq;
 using StudyDash.Api.Features.Mensageria.CompetingConsumers;
@@ -122,6 +125,9 @@ app.MapValueTaskFeature();
 
 // ── Arquiteturas ──────────────────────────────────────────────────────────────
 app.MapEventDrivenFeature();
+app.MapHexagonalArchitectureFeature();
+app.MapMediatRFeature();
+app.MapMicrokernelFeature();
 
 // ── Mensageria ────────────────────────────────────────────────────────────────
 app.MapExchangePatternsFeature();

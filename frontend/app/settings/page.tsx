@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Icon }   from "@/components/ui/Icon";
-import { getConfig, patchConfig, getAiModels, generateStudy } from "@/lib/api";
+import { getConfig, patchConfig, getAiModels, CLIENT_API_URL } from "@/lib/api";
 import type { StudydashConfigDto } from "@/lib/types";
 
 // ── Tipos locais ───────────────────────────────────────────────────────────────
 type Tab = "ai" | "skills" | "backend" | "generate";
+
+// Prompt de exemplo pra quem não sabe por onde começar a gerar um estudo.
+const EXAMPLE_PROMPT =
+  "Crie um estudo completo sobre o padrão Observer: explique o problema que ele resolve, " +
+  "compare com Pub/Sub e Mediator, gere um exemplo de código em C# e um quiz de fixação.";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -88,10 +93,15 @@ function SaveButton({ saving, onClick }: { saving: boolean; onClick: () => void 
 export default function SettingsPage() {
   const [tab,     setTab]     = useState<Tab>("ai");
   const [config,  setConfig]  = useState<StudydashConfigDto | null>(null);
-  const [models,  setModels]  = useState<{ anthropic: {id:string;label:string}[]; google: {id:string;label:string}[] } | null>(null);
+  const [models,  setModels]  = useState<{ anthropic: {id:string;label:string}[]; google: {id:string;label:string}[]; cli: {id:string;label:string}[] } | null>(null);
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
   const [error,   setError]   = useState<string | null>(null);
+  const [newApiKey, setNewApiKey] = useState("");
+  const [genLogs, setGenLogs] = useState<string[]>([]);
+  const [fallbackEdits, setFallbackEdits] = useState<
+    { provider: "anthropic" | "google"; model: string; label: string; newApiKey: string }[]
+  >([]);
 
   // ── Generate tab state ─────────────────────────────────────────────────────
   const [genPrompt,   setGenPrompt]   = useState("");
@@ -104,6 +114,15 @@ export default function SettingsPage() {
     getConfig().then(setConfig).catch(() => setError("Não foi possível conectar à API. Execute `studydash up`."));
     getAiModels().then(setModels).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (config?.ai.fallbacks) {
+      setFallbackEdits(config.ai.fallbacks.map(f => ({
+        provider: f.provider, model: f.model, label: f.label, newApiKey: '',
+      })));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config?.ai.fallbacks.length]);
 
   const save = async (patch: Record<string, unknown>) => {
     setSaving(true);
@@ -124,17 +143,55 @@ export default function SettingsPage() {
   const handleGenerate = async () => {
     if (!genPrompt.trim()) return;
     setGenLoading(true);
+    setGenLogs([]);
     setGenError(null);
     setGenResult(null);
+
+    let jobId: string;
     try {
-      const { study } = await generateStudy(genPrompt);
-      setGenResult(`Estudo "${study.title}" criado com sucesso! Acesse /${study.slug} no catálogo.`);
-      setGenPrompt("");
+      const res = await fetch(`${CLIENT_API_URL}/api/ai/generate`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ prompt: genPrompt }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setGenError(data.error ?? "Erro ao iniciar geração");
+        setGenLoading(false);
+        return;
+      }
+      jobId = data.jobId;
     } catch (e: unknown) {
       setGenError(e instanceof Error ? e.message : String(e));
-    } finally {
       setGenLoading(false);
+      return;
     }
+
+    const es = new EventSource(`${CLIENT_API_URL}/api/ai/generate/stream/${jobId}`);
+
+    es.addEventListener("log", (e) => {
+      setGenLogs((prev) => [...prev, (e as MessageEvent).data]);
+    });
+
+    es.addEventListener("result", (e) => {
+      try {
+        const { study } = JSON.parse((e as MessageEvent).data);
+        setGenResult(`Estudo "${study.title}" criado com sucesso! Acesse /studies/${study.slug}`);
+        setGenPrompt("");
+      } catch {
+        setGenResult("Estudo gerado com sucesso!");
+      }
+      es.close();
+      setGenLoading(false);
+    });
+
+    es.addEventListener("error", (e) => {
+      setGenError((e as MessageEvent).data ?? "Erro desconhecido");
+      es.close();
+      setGenLoading(false);
+    });
+
+    es.onerror = () => { es.close(); setGenLoading(false); };
   };
 
   // ── UI ─────────────────────────────────────────────────────────────────────
@@ -194,27 +251,36 @@ export default function SettingsPage() {
             <Field label="Provider">
               <Select
                 value={config.ai.provider}
-                onChange={(v) => setConfig({ ...config, ai: { ...config.ai, provider: v as "anthropic" | "google" } })}
+                onChange={(v) => setConfig({ ...config, ai: { ...config.ai, provider: v as "anthropic" | "google" | "cli", model: "" } })}
               >
-                <option value="anthropic">Anthropic (Claude)</option>
-                <option value="google">Google (Gemini)</option>
+                <option value="anthropic">Anthropic (Claude) — requer API key</option>
+                <option value="google">Google (Gemini) — requer API key</option>
+                <option value="cli">Claude Code CLI local — sem API key</option>
               </Select>
             </Field>
 
-            <Field
-              label="API Key"
-              hint={config.ai.hasApiKey
-                ? `Chave configurada (…${config.ai.apiKeyHint}). Cole uma nova para substituir.`
-                : "Nenhuma chave configurada."}
-            >
-              <Input
-                type="password"
-                placeholder={config.ai.provider === "anthropic" ? "sk-ant-..." : "AIza..."}
-                onChange={(e) =>
-                  setConfig({ ...config, ai: { ...config.ai, apiKeyHint: e.target.value } as typeof config.ai })
-                }
-              />
-            </Field>
+            {config.ai.provider === "cli" ? (
+              <div className="bg-zinc-800/60 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-400 text-sm leading-relaxed">
+                Usa o Claude Code CLI já instalado e autenticado nesta máquina (mesma sessão do{" "}
+                <code className="text-zinc-300">claude</code> no terminal) — não precisa colar nenhuma API key aqui.
+                Se ainda não instalou: <code className="text-zinc-300">npm install -g @anthropic-ai/claude-code</code>{" "}
+                e depois <code className="text-zinc-300">claude login</code>.
+              </div>
+            ) : (
+              <Field
+                label="API Key"
+                hint={config.ai.hasApiKey
+                  ? `Chave configurada (…${config.ai.apiKeyHint}). Cole uma nova para substituir.`
+                  : "Nenhuma chave configurada."}
+              >
+                <Input
+                  type="password"
+                  value={newApiKey}
+                  placeholder={config.ai.provider === "anthropic" ? "sk-ant-..." : "AIza..."}
+                  onChange={(e) => setNewApiKey(e.target.value)}
+                />
+              </Field>
+            )}
 
             <Field label="Modelo">
               <Select
@@ -229,14 +295,93 @@ export default function SettingsPage() {
 
             <SaveButton
               saving={saving}
-              onClick={() => save({
-                ai: {
+              onClick={() => {
+                const patch: Record<string, unknown> = {
                   provider: config.ai.provider,
                   model:    config.ai.model,
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  apiKey: (config.ai as any).apiKeyHint ?? undefined,
-                },
-              })}
+                };
+                if (newApiKey.trim()) patch.apiKey = newApiKey.trim();
+                save({ ai: patch }).then(() => setNewApiKey(""));
+              }}
+            />
+          </Section>
+          <Section title="Provedores de Fallback">
+            <p className="text-zinc-500 text-sm leading-relaxed">
+              Se o provedor principal falhar por cota esgotada, o StudyDash tentará os provedores abaixo em ordem.
+            </p>
+
+            {fallbackEdits.map((fb, i) => (
+              <div key={i} className="flex flex-col gap-3 border border-zinc-700 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-300 text-sm font-medium">Fallback {i + 1}</span>
+                  <button
+                    onClick={() => setFallbackEdits((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="text-zinc-600 hover:text-red-400 text-xs transition-colors"
+                  >
+                    Remover
+                  </button>
+                </div>
+                <Field label="Label (opcional)">
+                  <Input
+                    value={fb.label}
+                    placeholder="Ex: Anthropic backup"
+                    onChange={(e) => setFallbackEdits((prev) => prev.map((x, idx) => idx === i ? { ...x, label: e.target.value } : x))}
+                  />
+                </Field>
+                <Field label="Provider">
+                  <Select
+                    value={fb.provider}
+                    onChange={(v) => setFallbackEdits((prev) => prev.map((x, idx) => idx === i ? { ...x, provider: v as "anthropic" | "google", model: (models?.[v as "anthropic"|"google"]?.[0]?.id ?? '') } : x))}
+                  >
+                    <option value="anthropic">Anthropic (Claude)</option>
+                    <option value="google">Google (Gemini)</option>
+                  </Select>
+                </Field>
+                <Field label="Modelo">
+                  <Select
+                    value={fb.model}
+                    onChange={(v) => setFallbackEdits((prev) => prev.map((x, idx) => idx === i ? { ...x, model: v } : x))}
+                  >
+                    {(models?.[fb.provider] ?? []).map((m) => (
+                      <option key={m.id} value={m.id}>{m.label}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field
+                  label="API Key"
+                  hint={config?.ai.fallbacks[i]?.hasApiKey ? `Chave configurada (…${config.ai.fallbacks[i]?.apiKeyHint}). Cole uma nova para substituir.` : "Nenhuma chave configurada."}
+                >
+                  <Input
+                    type="password"
+                    value={fb.newApiKey}
+                    placeholder={fb.provider === "anthropic" ? "sk-ant-..." : "AIza..."}
+                    onChange={(e) => setFallbackEdits((prev) => prev.map((x, idx) => idx === i ? { ...x, newApiKey: e.target.value } : x))}
+                  />
+                </Field>
+              </div>
+            ))}
+
+            <button
+              onClick={() => setFallbackEdits((prev) => [...prev, { provider: "anthropic", model: models?.anthropic?.[1]?.id ?? "claude-sonnet-4-6", label: "", newApiKey: "" }])}
+              className="self-start px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-400 hover:text-white text-xs font-medium transition-colors"
+            >
+              + Adicionar fallback
+            </button>
+
+            <SaveButton
+              saving={saving}
+              onClick={() =>
+                save({
+                  ai: {
+                    fallbacks: fallbackEdits.map((edit, i) => ({
+                      provider: edit.provider,
+                      model:    edit.model,
+                      label:    edit.label,
+                      ...(edit.newApiKey.trim() ? { apiKey: edit.newApiKey.trim() } : {}),
+                    })),
+                  },
+                }).then(() => setFallbackEdits((prev) => prev.map((fb) => ({ ...fb, newApiKey: "" }))))
+              }
             />
           </Section>
         </div>
@@ -312,6 +457,27 @@ export default function SettingsPage() {
               onClick={() => save({ backend: config.backend, frontend: config.frontend })}
             />
           </Section>
+
+          <Section title="Código Gerado">
+            <p className="text-zinc-500 text-sm leading-relaxed">
+              Pasta local onde os arquivos JavaScript executáveis gerados pela IA serão salvos.
+              Obrigatório para gerar estudos.
+            </p>
+            <Field
+              label="Pasta de código"
+              hint={config.codePath ? `Atual: ${config.codePath}` : "Nenhuma pasta configurada."}
+            >
+              <Input
+                value={config.codePath ?? ""}
+                placeholder="Ex: C:\Users\seu-usuario\studydash-code"
+                onChange={(e) => setConfig({ ...config, codePath: e.target.value })}
+              />
+            </Field>
+            <SaveButton
+              saving={saving}
+              onClick={() => save({ codePath: config.codePath })}
+            />
+          </Section>
         </div>
       )}
 
@@ -324,9 +490,16 @@ export default function SettingsPage() {
               para gerar um estudo completo com código, comparações e quiz.
             </p>
 
-            {!config?.ai.hasApiKey && (
+            {!(config?.ai.provider === "cli" || config?.ai.hasApiKey) && (
               <div className="bg-amber-950 border border-amber-800 rounded-lg px-4 py-3 text-amber-300 text-sm">
-                Configure sua API key na aba <strong>Inteligência Artificial</strong> antes de gerar.
+                Configure sua API key (ou selecione o provider <strong>Claude Code CLI local</strong>) na aba{" "}
+                <strong>Inteligência Artificial</strong> antes de gerar.
+              </div>
+            )}
+
+            {!config?.codePath && (
+              <div className="bg-amber-950 border border-amber-800 rounded-lg px-4 py-3 text-amber-300 text-sm">
+                Configure a <strong>Pasta de código</strong> na aba <strong>Backend</strong> antes de gerar.
               </div>
             )}
 
@@ -338,6 +511,13 @@ export default function SettingsPage() {
                 placeholder="Ex: Crie um estudo sobre Observer Pattern em C#, com comparação com Event-Driven Architecture"
                 className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-violet-600 transition-colors resize-none"
               />
+              <button
+                type="button"
+                onClick={() => setGenPrompt(EXAMPLE_PROMPT)}
+                className="self-start text-xs text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                Usar prompt de exemplo
+              </button>
             </Field>
 
             {genError && (
@@ -354,17 +534,27 @@ export default function SettingsPage() {
 
             <button
               onClick={handleGenerate}
-              disabled={genLoading || !genPrompt.trim() || !config?.ai.hasApiKey}
+              disabled={genLoading || !genPrompt.trim() || !(config?.ai.provider === "cli" || config?.ai.hasApiKey) || !config?.codePath}
               className="self-start flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-700 hover:bg-violet-600 disabled:opacity-40 text-white text-sm font-medium transition-colors"
             >
               <Icon name="Wand2" size={14} />
               {genLoading ? "Gerando…" : "Gerar estudo"}
             </button>
 
-            {genLoading && (
-              <p className="text-zinc-500 text-xs animate-pulse">
-                A IA está usando as skills para montar o estudo. Isso pode levar 15-30 segundos…
-              </p>
+            {(genLoading || genLogs.length > 0) && (
+              <div className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden">
+                <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900 text-zinc-500 text-xs font-mono">
+                  studydash / ai generate
+                </div>
+                <div className="p-4 font-mono text-xs space-y-0.5 max-h-56 overflow-y-auto">
+                  {genLogs.map((line, i) => (
+                    <div key={i} className="text-zinc-300 leading-relaxed">{line}</div>
+                  ))}
+                  {genLoading && (
+                    <span className="inline-block w-1.5 h-3 bg-violet-400 animate-pulse ml-0.5" />
+                  )}
+                </div>
+              </div>
             )}
           </Section>
         </div>

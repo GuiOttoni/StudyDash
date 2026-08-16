@@ -9,7 +9,7 @@ const SERVER_API_URL =
 
 // Client-side URL: NEXT_PUBLIC_* vars are inlined at build time by Next.js,
 // so this is safe to use in both browser and server contexts.
-const CLIENT_API_URL =
+export const CLIENT_API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5055";
 
 // ── Read (Server Components) ──────────────────────────────────────────────────
@@ -147,6 +147,7 @@ export async function getAiStudy(slug: string): Promise<AiStudyDto> {
 export async function getAiModels(): Promise<{
   anthropic: { id: string; label: string }[];
   google:    { id: string; label: string }[];
+  cli:       { id: string; label: string }[];
 }> {
   const res = await fetch(`${CLIENT_API_URL}/api/ai/models`);
   if (!res.ok) throw new Error(await res.text());

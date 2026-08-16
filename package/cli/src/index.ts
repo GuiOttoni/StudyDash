@@ -59,7 +59,10 @@ program
     }
 
     console.log()
-    console.log(chalk.dim(`  Provider: ${cfg.ai.provider}  |  Modelo: ${cfg.ai.model}  |  API key: ${cfg.ai.apiKey ? '✓ configurada' : '✗ não configurada'}`))
+    const authStatus = cfg.ai.provider === 'cli'
+      ? '✓ usando Claude Code CLI local (sem API key)'
+      : cfg.ai.apiKey ? '✓ configurada' : '✗ não configurada'
+    console.log(chalk.dim(`  Provider: ${cfg.ai.provider}  |  Modelo: ${cfg.ai.model || '(padrão)'}  |  API key: ${authStatus}`))
     console.log()
   })
 

@@ -1,6 +1,7 @@
 import { notFound }    from "next/navigation";
 import { getAiStudy }  from "@/lib/api";
 import { getSections } from "@/lib/api";
+import { RunCode }     from "./RunCode";
 import { getCategoryColor } from "@/lib/category-colors";
 import { CodeSnippet }  from "@/components/patterns/CodeSnippet";
 import { SourceLinks }  from "@/components/patterns/SourceLinks";
@@ -184,6 +185,15 @@ export default async function AiStudyPage({ params }: Props) {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Runnable Code */}
+      {data.content.runnableCode && (
+        <RunCode
+          slug={slug}
+          code={data.content.runnableCode.code}
+          description={data.content.runnableCode.description}
+        />
       )}
 
       {/* Prompt usado */}

@@ -45,7 +45,8 @@ export async function cmdUp(): Promise<void> {
   spinner.text = 'Iniciando frontend...'
   const frontProc = spawnProcess('node', [FRONTEND_SERVER], {
     PORT:                String(cfg.frontend.port),
-    HOSTNAME:            '0.0.0.0',
+    // 127.0.0.1: sem autenticação, o dashboard nunca deve ficar exposto na rede
+    HOSTNAME:            '127.0.0.1',
     NEXT_PUBLIC_API_URL: `http://localhost:${cfg.backend.port}`,
   })
   frontProc.unref()

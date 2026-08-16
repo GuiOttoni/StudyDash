@@ -5,7 +5,9 @@ export interface StudydashConfig {
   backend:  { port: number; host: string }
   frontend: { port: number }
   ai: {
-    provider: 'anthropic' | 'google'
+    // 'cli' usa o Claude Code CLI já instalado/autenticado na máquina —
+    // não precisa de apiKey.
+    provider: 'anthropic' | 'google' | 'cli'
     apiKey:   string
     model:    string
     skills: {
@@ -44,12 +46,22 @@ export function readConfig(): StudydashConfig {
   }
 }
 
+// Faz merge por cima do arquivo existente em vez de sobrescrever — StudydashConfig
+// aqui é um subconjunto do shape usado pela API (que também guarda codePath e
+// ai.fallbacks); sobrescrever direto apagaria esses campos.
 export function writeConfig(cfg: StudydashConfig): void {
   if (!existsSync(HOME_DIR)) mkdirSync(HOME_DIR, { recursive: true })
-  writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2))
+
+  let raw: Record<string, any> = {}
+  if (existsSync(CONFIG_FILE)) {
+    try { raw = JSON.parse(readFileSync(CONFIG_FILE, 'utf-8')) } catch { /* arquivo corrompido, ignora */ }
+  }
+
+  const merged = { ...raw, ...cfg, ai: { ...raw.ai, ...cfg.ai } }
+  writeFileSync(CONFIG_FILE, JSON.stringify(merged, null, 2))
 }
 
 export function isConfigured(): boolean {
   const cfg = readConfig()
-  return !!cfg.ai.apiKey
+  return cfg.ai.provider === 'cli' || !!cfg.ai.apiKey
 }

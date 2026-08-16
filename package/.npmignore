@@ -1,0 +1,8 @@
+# Ignore all not needed stuff. The `files` array in package.json handles inclusion.
+# This file is needed so that npm doesn't fall back to the root .gitignore which ignores dist/.
+src/
+api/
+cli/
+*.config.*
+tests/
+tsconfig.json
