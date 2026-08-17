@@ -55,7 +55,7 @@ export function StudyCard({ study }: Props) {
   if (!study.available) return card;
 
   return (
-    <Link href={`/patterns/${study.slug}`} className="block">
+    <Link href={`/studies/${study.slug}`} className="block">
       {card}
     </Link>
   );

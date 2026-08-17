@@ -129,7 +129,7 @@ services:
         - NEXT_PUBLIC_API_URL=http://localhost:5055
     container_name: studydash-frontend
     ports:
-      - "3055:3000"
+      - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:5055
       - INTERNAL_API_URL=http://studydash-backend:8080

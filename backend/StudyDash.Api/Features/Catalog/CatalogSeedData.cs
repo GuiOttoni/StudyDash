@@ -197,6 +197,18 @@ public static class CatalogSeedData
             Icon        = "ArrowLeftRight",
             Description = "Separação de modelos de leitura e escrita — Command/Query segregation, projeções independentes e consistência eventual." },
 
+        new() { Slug = "hexagonal-architecture", Title = "Arquitetura Hexagonal", Category = "Arquitetura",    Order = 21, Available = true,
+            Icon        = "Hexagon",
+            Description = "Ports & Adapters (Cockburn, 2005): domínio define interfaces (ports), adapters conectam tecnologias externas sem vazar detalhes para o núcleo. Compara Hexagonal vs Clean Architecture vs Onion Architecture." },
+
+        new() { Slug = "mediatr",                Title = "MediatR vs Hexagonal", Category = "Arquitetura",    Order = 22, Available = true,
+            Icon        = "Waypoints",
+            Description = "MediatR (Mediator pattern) vs Hexagonal Direto: commands, handlers, pipeline behaviors (logging, validation) e notifications — quando cada abordagem faz sentido e como elas se complementam." },
+
+        new() { Slug = "microkernel",            Title = "Microkernel",          Category = "Arquitetura",    Order = 23, Available = true,
+            Icon        = "Puzzle",
+            Description = "Plugin Architecture: Core estável + plugins intercambiáveis com ciclo de vida (Initialize/Process/Dispose). Demo com sistema de pagamentos — PIX, Cartão, Boleto, hot-swap em runtime e isolamento de falha por plugin." },
+
         // ── Mensageria ──────────────────────────────────────────────────────────
         new() { Slug = "exchange-patterns",     Title = "Exchange Patterns",          Category = "Mensageria", Order = 21, Available = true,
             Icon        = "Send",

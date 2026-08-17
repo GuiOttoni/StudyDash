@@ -1,0 +1,50 @@
+{
+  "name": "studydash",
+  "version": "0.1.0",
+  "description": "Self-hosted learning dashboard with AI-powered study generation",
+  "keywords": ["learning", "study", "ai", "claude", "gemini", "boilerplate"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GuiOttoni/StudyDash.git",
+    "directory": "package"
+  },
+  "bin": {
+    "studydash": "./dist/cli/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "build":          "node build.mjs",
+    "build:api":      "npx esbuild api/src/index.ts --bundle --platform=node --target=node22 --outfile=dist/api.js --external:@anthropic-ai/sdk --external:@google/generative-ai --format=cjs",
+    "build:cli":      "npx esbuild cli/src/index.ts --bundle --platform=node --target=node22 --outfile=dist/cli/index.js --format=cjs --packages=external",
+    "build:frontend": "cd ../frontend && npm run build && cp -r .next/standalone/. ../package/dist/frontend && cp -r .next/static ../package/dist/frontend/.next/static && cp -r public ../package/dist/frontend/public",
+    "dev:api":        "npx tsx watch api/src/index.ts",
+    "dev:frontend":   "cd ../frontend && npm run dev",
+    "dev":            "concurrently \"npm run dev:api\" \"npm run dev:frontend\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk":     "^0.39.0",
+    "@google/generative-ai": "^0.24.0",
+    "@hono/node-server":     "^1.14.0",
+    "chalk":                 "^5.4.1",
+    "commander":             "^13.1.0",
+    "concurrently":          "^9.1.2",
+    "detect-port":           "^2.1.0",
+    "hono":                  "^4.7.7",
+    "inquirer":              "^12.5.2",
+    "open":                  "^10.1.2",
+    "ora":                   "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node":  "^22.0.0",
+    "esbuild":      "^0.25.2",
+    "tsx":          "^4.19.3",
+    "typescript":   "^5.8.3"
+  }
+}
