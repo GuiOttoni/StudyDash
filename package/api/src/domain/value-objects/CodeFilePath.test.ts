@@ -22,7 +22,10 @@ describe('CodeFilePath.resolveWithin', () => {
   })
 
   it('rejeita um caminho absoluto disfarçado de slug', () => {
-    const fakeSlug = { toString: () => 'C:/Windows/System32/evil' } as Slug
+    // '/etc/passwd' é absoluto tanto no POSIX quanto no Windows (raiz da
+    // unidade atual) — ao contrário de algo como 'C:/...', que só é
+    // absoluto no Windows e faria esse teste variar por plataforma/CI.
+    const fakeSlug = { toString: () => '/etc/passwd' } as Slug
     expect(CodeFilePath.resolveWithin(BASE, fakeSlug)).toBeNull()
   })
 })
