@@ -2,10 +2,10 @@ import { spawn, type ChildProcess } from 'child_process'
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs'
 import { PIDS_FILE } from './paths.js'
 
-interface PidsFile { api: number; frontend: number }
+interface PidsFile { pid: number }
 
-export function savePids(api: number, frontend: number): void {
-  writeFileSync(PIDS_FILE, JSON.stringify({ api, frontend }))
+export function savePid(pid: number): void {
+  writeFileSync(PIDS_FILE, JSON.stringify({ pid }))
 }
 
 export function readPids(): PidsFile | null {

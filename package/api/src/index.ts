@@ -1,45 +1,40 @@
-import { serve }   from '@hono/node-server'
-import { Hono }    from 'hono'
-import { cors }    from 'hono/cors'
-import { logger }  from 'hono/logger'
-import { sections, studies } from './routes/catalog.js'
-import { config }  from './routes/config.js'
-import { ai }      from './routes/ai.js'
-import { initDatabase } from './db/client.js'
-import { readConfig }   from './utils/config.js'
+import { serve } from '@hono/node-server'
+import { join } from 'path'
+import { existsSync } from 'fs'
+import { openSqliteConnection } from './infrastructure/persistence/sqlite/SqliteConnection.js'
+import { SqliteSectionRepository } from './infrastructure/persistence/sqlite/SqliteSectionRepository.js'
+import { SqliteStudyRepository } from './infrastructure/persistence/sqlite/SqliteStudyRepository.js'
+import { SqliteAiStudyContentRepository } from './infrastructure/persistence/sqlite/SqliteAiStudyContentRepository.js'
+import { FileConfigStore, STUDYDASH_DIR } from './infrastructure/config/FileConfigStore.js'
+import { InMemoryGenerationJobStore } from './infrastructure/jobs/InMemoryGenerationJobStore.js'
+import { NodeCodeRunner } from './infrastructure/code-execution/NodeCodeRunner.js'
+import { createServer } from './presentation/http/server.js'
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-initDatabase()
+// ── Composition root ─────────────────────────────────────────────────────────
+// Único lugar que conhece implementações concretas de infraestrutura e as
+// injeta nas camadas de aplicação/apresentação.
 
-const cfg  = readConfig()
-const port = Number(process.env.PORT ?? cfg.backend.port)
+const configStore = new FileConfigStore()
+const config = configStore.read()
 
-// ── App ───────────────────────────────────────────────────────────────────────
-const app = new Hono()
+const db = openSqliteConnection(join(STUDYDASH_DIR, 'studydash.db'))
 
-app.use('*', logger())
-app.use('*', cors({
-  origin: (origin) => {
-    // permite qualquer localhost (dev + frontend standalone)
-    if (!origin) return origin
-    try { return new URL(origin).hostname === 'localhost' ? origin : null }
-    catch { return null }
-  },
-  allowHeaders:  ['Content-Type', 'Authorization'],
-  allowMethods:  ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-}))
+const publicDir = join(__dirname, 'public')
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-app.route('/api/sections', sections)
-app.route('/api/studies',  studies)
-app.route('/api/config',   config)
-app.route('/api/ai',       ai)
+const app = createServer({
+  sectionRepo: new SqliteSectionRepository(db),
+  studyRepo:   new SqliteStudyRepository(db),
+  contentRepo: new SqliteAiStudyContentRepository(db),
+  configStore,
+  jobStore:    new InMemoryGenerationJobStore(),
+  codeRunner:  new NodeCodeRunner(),
+  publicDir:   existsSync(publicDir) ? publicDir : null,
+})
 
-app.get('/health', (c) => c.json({ ok: true, version: '0.1.0' }))
+const port = Number(process.env.PORT ?? config.server.port)
 
-// ── Start ─────────────────────────────────────────────────────────────────────
-// hostname fixo em 127.0.0.1: a API não tem autenticação, então nunca deve
-// ficar acessível para outras máquinas na rede.
+// 127.0.0.1: sem autenticação própria, o StudyDash nunca deve ficar
+// acessível para outras máquinas na rede.
 serve({ fetch: app.fetch, port, hostname: '127.0.0.1' }, (info) => {
-  console.log(`StudyDash API  →  http://localhost:${info.port}`)
+  console.log(`StudyDash → http://localhost:${info.port}`)
 })

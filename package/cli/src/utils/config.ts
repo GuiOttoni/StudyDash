@@ -1,9 +1,9 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
-import { HOME_DIR, CONFIG_FILE } from './paths.js'
+import { existsSync, readFileSync } from 'fs'
+import { CONFIG_FILE } from './paths.js'
 
 export interface StudydashConfig {
-  backend:  { port: number; host: string }
-  frontend: { port: number }
+  // Processo único desde a migração pra Vite (era backend+frontend separados).
+  server: { port: number; host: string }
   ai: {
     // 'cli' usa o Claude Code CLI já instalado/autenticado na máquina —
     // não precisa de apiKey.
@@ -20,13 +20,15 @@ export interface StudydashConfig {
   }
 }
 
+// 'cli' como default: só reflete o config.json real depois que a API grava um
+// (via tela de Configurações) — antes disso, é o mesmo default zero-fricção
+// usado pela API (api/src/infrastructure/config/FileConfigStore.ts).
 export const DEFAULT_CONFIG: StudydashConfig = {
-  backend:  { port: 5055, host: 'localhost' },
-  frontend: { port: 8085 },
+  server: { port: 5055, host: 'localhost' },
   ai: {
-    provider: 'anthropic',
+    provider: 'cli',
     apiKey:   '',
-    model:    'claude-sonnet-4-6',
+    model:    '',
     skills: {
       codeSnippet:  true,
       comparison:   true,
@@ -40,25 +42,15 @@ export const DEFAULT_CONFIG: StudydashConfig = {
 export function readConfig(): StudydashConfig {
   if (!existsSync(CONFIG_FILE)) return { ...DEFAULT_CONFIG }
   try {
-    return JSON.parse(readFileSync(CONFIG_FILE, 'utf-8'))
+    const raw = JSON.parse(readFileSync(CONFIG_FILE, 'utf-8'))
+    // Config de antes da v0.3.0 (processo separado de frontend) tinha
+    // `backend.port` em vez de `server.port` — migra pra não perder a porta
+    // customizada, e pra sempre ter `server` definido (evita crash no `up`).
+    const server = raw.server ?? raw.backend ?? DEFAULT_CONFIG.server
+    return { ...DEFAULT_CONFIG, ...raw, server, ai: { ...DEFAULT_CONFIG.ai, ...raw.ai } }
   } catch {
     return { ...DEFAULT_CONFIG }
   }
-}
-
-// Faz merge por cima do arquivo existente em vez de sobrescrever — StudydashConfig
-// aqui é um subconjunto do shape usado pela API (que também guarda codePath e
-// ai.fallbacks); sobrescrever direto apagaria esses campos.
-export function writeConfig(cfg: StudydashConfig): void {
-  if (!existsSync(HOME_DIR)) mkdirSync(HOME_DIR, { recursive: true })
-
-  let raw: Record<string, any> = {}
-  if (existsSync(CONFIG_FILE)) {
-    try { raw = JSON.parse(readFileSync(CONFIG_FILE, 'utf-8')) } catch { /* arquivo corrompido, ignora */ }
-  }
-
-  const merged = { ...raw, ...cfg, ai: { ...raw.ai, ...cfg.ai } }
-  writeFileSync(CONFIG_FILE, JSON.stringify(merged, null, 2))
 }
 
 export function isConfigured(): boolean {

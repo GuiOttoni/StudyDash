@@ -3,11 +3,15 @@ name: Build & Publish to npm
 on:
   release:
     types: [published]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versão a publicar (ex: 1.0.0). Deixe vazio para usar a do package.json."
+        required: false
 
 permissions:
   contents: read
-  id-token: write   # required for npm trusted publishing (OIDC)
+  id-token: write # necessário para npm trusted publishing (OIDC)
 
 jobs:
   publish:
@@ -26,8 +30,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package/package-lock.json
 
-      - name: Ensure npm >= 11.5.1 (required for trusted publishing)
+      - name: Ensure npm >= 11.5.1 (necessário para trusted publishing)
         run: npm install -g npm@latest
+
+      # Uma release no GitHub (tag "v1.0.0") vira automaticamente a versão
+      # publicada no npm — não precisa editar package.json manualmente antes.
+      - name: Sync version with release tag
+        if: github.event_name == 'release'
+        working-directory: package
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Set version (manual dispatch)
+        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+        working-directory: package
+        run: npm version "${{ inputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Install package dependencies
         working-directory: package
@@ -41,8 +60,20 @@ jobs:
         working-directory: package
         run: npm run build
 
+      - name: Run tests
+        working-directory: package
+        run: npm test
+
+      # Trusted Publisher (OIDC) configurado no npmjs.com para este pacote —
+      # nenhum token/secret necessário, npm troca o id-token do job pela
+      # autenticação automaticamente.
       - name: Publish to npm
         working-directory: package
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        working-directory: package
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "### Publicado: studydash@$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "https://www.npmjs.com/package/studydash" >> $GITHUB_STEP_SUMMARY

@@ -4,19 +4,18 @@ import { readPids, isRunning } from './utils/process-manager.js'
 import { readConfig }          from './utils/config.js'
 import { cmdUp }     from './commands/up.js'
 import { cmdDown }   from './commands/down.js'
-import { cmdConfig } from './commands/config.js'
 
 const program = new Command()
 
 program
   .name('studydash')
   .description('Self-hosted learning dashboard with AI-powered study generation')
-  .version('0.1.0')
+  .version('0.3.0')
 
 // ── studydash up ──────────────────────────────────────────────────────────────
 program
   .command('up')
-  .description('Inicia o StudyDash (API + frontend)')
+  .description('Inicia o StudyDash')
   .action(async () => {
     await cmdUp()
   })
@@ -27,14 +26,6 @@ program
   .description('Para o StudyDash')
   .action(() => {
     cmdDown()
-  })
-
-// ── studydash config ──────────────────────────────────────────────────────────
-program
-  .command('config')
-  .description('Configura API keys, modelo e skills')
-  .action(async () => {
-    await cmdConfig()
   })
 
 // ── studydash status ──────────────────────────────────────────────────────────
@@ -52,10 +43,8 @@ program
     if (!pids) {
       console.log(`  ${chalk.red('●')} Parado`)
     } else {
-      const apiOk   = isRunning(pids.api)
-      const frontOk = isRunning(pids.frontend)
-      console.log(`  API      ${apiOk   ? chalk.green('● rodando') : chalk.red('● parado')}  →  http://localhost:${cfg.backend.port}`)
-      console.log(`  Frontend ${frontOk ? chalk.green('● rodando') : chalk.red('● parado')}  →  http://localhost:${cfg.frontend.port}`)
+      const ok = isRunning(pids.pid)
+      console.log(`  ${ok ? chalk.green('● rodando') : chalk.red('● parado')}  →  http://localhost:${cfg.server.port}`)
     }
 
     console.log()

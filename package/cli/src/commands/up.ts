@@ -2,9 +2,9 @@ import chalk from 'chalk'
 import ora   from 'ora'
 import open  from 'open'
 import { readConfig, isConfigured } from '../utils/config.js'
-import { API_JS, FRONTEND_SERVER }  from '../utils/paths.js'
+import { API_JS }                   from '../utils/paths.js'
 import {
-  savePids, readPids, isRunning,
+  savePid, readPids, isRunning,
   waitForPort, spawnProcess,
 } from '../utils/process-manager.js'
 
@@ -13,61 +13,39 @@ export async function cmdUp(): Promise<void> {
 
   // ── Verifica se já está rodando ────────────────────────────────────────────
   const existing = readPids()
-  if (existing && isRunning(existing.api) && isRunning(existing.frontend)) {
+  if (existing && isRunning(existing.pid)) {
     console.log(chalk.yellow('StudyDash já está rodando.'))
-    console.log(chalk.dim(`  Frontend → http://localhost:${cfg.frontend.port}`))
-    console.log(chalk.dim(`  API      → http://localhost:${cfg.backend.port}`))
+    console.log(chalk.dim(`  Dashboard → http://localhost:${cfg.server.port}`))
     return
   }
 
   // ── Aviso se AI não estiver configurada ────────────────────────────────────
   if (!isConfigured()) {
-    console.log(chalk.yellow('⚠  AI não configurada. Execute `studydash config` para adicionar sua API key.'))
+    console.log(chalk.yellow('⚠  AI não configurada. Acesse Configurações no dashboard para adicionar sua API key ou usar o Claude Code CLI local.'))
   }
 
   const spinner = ora('Iniciando StudyDash...').start()
 
-  // ── API (Hono + SQLite) ────────────────────────────────────────────────────
-  spinner.text = 'Iniciando API...'
-  const apiProc = spawnProcess('node', [API_JS], {
-    PORT: String(cfg.backend.port),
+  const proc = spawnProcess('node', [API_JS], {
+    PORT: String(cfg.server.port),
   })
-  apiProc.unref()
+  proc.unref()
 
-  const apiReady = await waitForPort(cfg.backend.port, 10_000)
-  if (!apiReady) {
-    spinner.fail('API não iniciou a tempo.')
-    apiProc.kill()
+  const ready = await waitForPort(cfg.server.port, 10_000)
+  if (!ready) {
+    spinner.fail('StudyDash não iniciou a tempo.')
+    proc.kill()
     process.exit(1)
   }
 
-  // ── Frontend (Next.js standalone) ─────────────────────────────────────────
-  spinner.text = 'Iniciando frontend...'
-  const frontProc = spawnProcess('node', [FRONTEND_SERVER], {
-    PORT:                String(cfg.frontend.port),
-    // 127.0.0.1: sem autenticação, o dashboard nunca deve ficar exposto na rede
-    HOSTNAME:            '127.0.0.1',
-    NEXT_PUBLIC_API_URL: `http://localhost:${cfg.backend.port}`,
-  })
-  frontProc.unref()
-
-  const frontReady = await waitForPort(cfg.frontend.port, 15_000, '/')
-  if (!frontReady) {
-    spinner.fail('Frontend não iniciou a tempo.')
-    apiProc.kill()
-    frontProc.kill()
-    process.exit(1)
-  }
-
-  savePids(apiProc.pid!, frontProc.pid!)
+  savePid(proc.pid!)
   spinner.succeed(chalk.green('StudyDash está no ar!'))
 
   console.log()
-  console.log(`  ${chalk.bold('Dashboard')}  →  ${chalk.cyan(`http://localhost:${cfg.frontend.port}`)}`)
-  console.log(`  ${chalk.bold('API')}         →  ${chalk.dim(`http://localhost:${cfg.backend.port}`)}`)
+  console.log(`  ${chalk.bold('Dashboard')}  →  ${chalk.cyan(`http://localhost:${cfg.server.port}`)}`)
   console.log()
   console.log(chalk.dim('  Para parar: studydash down'))
   console.log()
 
-  await open(`http://localhost:${cfg.frontend.port}`)
+  await open(`http://localhost:${cfg.server.port}`)
 }
