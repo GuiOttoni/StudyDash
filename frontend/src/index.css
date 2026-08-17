@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ── Tema sóbrio, dois modos ─────────────────────────────────────────────── */
+:root {
+  --background: #f8f8f9;
+  --foreground: #18181b;
+
+  --bg-app:            #f8f8f9;
+  --bg-surface:         #ffffff;
+  --bg-surface-hover:   #f1f1f3;
+  --bg-control:         #e4e4e7;
+  --bg-control-hover:   #d4d4d8;
+
+  --border-subtle:      #f1f1f3;
+  --border-default:     #e4e4e7;
+  --border-strong:      #d4d4d8;
+  --border-emphasis:    #a1a1aa;
+
+  --text-primary:       #18181b;
+  --text-secondary:     #3f3f46;
+  --text-tertiary:      #52525b;
+  --text-muted:         #71717a;
+  --text-faint:         #a1a1aa;
+
+  --grid-line: rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+
+  --bg-app:            #09090b;
+  --bg-surface:         #18181b;
+  --bg-surface-hover:   #27272a;
+  --bg-control:         #3f3f46;
+  --bg-control-hover:   #52525b;
+
+  --border-subtle:      #18181b;
+  --border-default:     #27272a;
+  --border-strong:      #3f3f46;
+  --border-emphasis:    #71717a;
+
+  --text-primary:       #f4f4f5;
+  --text-secondary:     #d4d4d8;
+  --text-tertiary:      #a1a1aa;
+  --text-muted:         #71717a;
+  --text-faint:         #52525b;
+
+  --grid-line: rgba(255, 255, 255, 0.045);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  position: relative;
+}
+
+/* Grid de fundo, tela inteira, opacidade baixa — funciona nos dois temas
+   porque --grid-line muda de valor conforme .dark está presente ou não. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Exportar PDF (window.print()) — esconde chrome do app, mantém só o
+   conteúdo do estudo (marcado com data-print-area) legível em papel. */
+@media print {
+  body::before { display: none; }
+  [data-print-hide] { display: none !important; }
+  [data-print-area] {
+    max-width: 100% !important;
+    color: #111 !important;
+  }
+  [data-print-area] * {
+    color: inherit !important;
+    background: transparent !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+}

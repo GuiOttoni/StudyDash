@@ -2,7 +2,6 @@
 import { build } from 'esbuild'
 import { execSync } from 'child_process'
 import { cpSync, mkdirSync, rmSync } from 'fs'
-import { join } from 'path'
 
 const dist = 'dist'
 
@@ -43,17 +42,12 @@ await build({
   },
 })
 
-// ── Frontend (Next.js standalone) ────────────────────────────────────────────
+// ── Frontend (Vite SPA) ──────────────────────────────────────────────────────
+// Build estático servido pelo próprio processo da API (ver api/src/index.ts) —
+// um processo só, uma porta só, sem servidor Next separado.
 console.log('⚙️  Building frontend (this may take a minute)...')
 execSync('npm run build', { cwd: '../frontend', stdio: 'inherit' })
 
-const frontendDist = `${dist}/frontend`
-mkdirSync(frontendDist, { recursive: true })
-
-// standalone output: servidor Node.js auto-contido
-cpSync('../frontend/.next/standalone/.', frontendDist, { recursive: true })
-// static assets precisam ser copiados manualmente
-cpSync('../frontend/.next/static', join(frontendDist, '.next', 'static'), { recursive: true })
-cpSync('../frontend/public', join(frontendDist, 'public'), { recursive: true })
+cpSync('../frontend/dist', `${dist}/public`, { recursive: true })
 
 console.log('✅ Build complete → dist/')
